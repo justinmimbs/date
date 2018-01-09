@@ -1,6 +1,6 @@
 module Tests exposing (..)
 
-import Date.RataDie as Date
+import Date.RataDie as Date exposing (Month(..), Weekday(..))
 import Expect exposing (Expectation)
 import Test exposing (Test, describe, test)
 
@@ -28,7 +28,7 @@ testCalendarDate =
             \() ->
                 List.range 1997 2025
                     |> List.concatMap (calendarDatesInYear >> List.map fromCalendarDate)
-                    |> Expect.equal (List.range (Date.fromCalendarDate 1997 1 1) (Date.fromCalendarDate 2025 12 31))
+                    |> Expect.equal (List.range (Date.fromCalendarDate 1997 Jan 1) (Date.fromCalendarDate 2025 Dec 31))
         ]
 
 
@@ -45,22 +45,22 @@ testWeekDate =
                     )
             )
         , describe "toWeekDate produces results that match samples"
-            ([ ( CalendarDate 2005 1 1, WeekDate 2004 53 6 )
-             , ( CalendarDate 2005 1 2, WeekDate 2004 53 7 )
-             , ( CalendarDate 2005 12 31, WeekDate 2005 52 6 )
-             , ( CalendarDate 2007 1 1, WeekDate 2007 1 1 )
-             , ( CalendarDate 2007 12 30, WeekDate 2007 52 7 )
-             , ( CalendarDate 2007 12 31, WeekDate 2008 1 1 )
-             , ( CalendarDate 2008 1 1, WeekDate 2008 1 2 )
-             , ( CalendarDate 2008 12 28, WeekDate 2008 52 7 )
-             , ( CalendarDate 2008 12 29, WeekDate 2009 1 1 )
-             , ( CalendarDate 2008 12 30, WeekDate 2009 1 2 )
-             , ( CalendarDate 2008 12 31, WeekDate 2009 1 3 )
-             , ( CalendarDate 2009 1 1, WeekDate 2009 1 4 )
-             , ( CalendarDate 2009 12 31, WeekDate 2009 53 4 )
-             , ( CalendarDate 2010 1 1, WeekDate 2009 53 5 )
-             , ( CalendarDate 2010 1 2, WeekDate 2009 53 6 )
-             , ( CalendarDate 2010 1 3, WeekDate 2009 53 7 )
+            ([ ( CalendarDate 2005 Jan 1, WeekDate 2004 53 Sat )
+             , ( CalendarDate 2005 Jan 2, WeekDate 2004 53 Sun )
+             , ( CalendarDate 2005 Dec 31, WeekDate 2005 52 Sat )
+             , ( CalendarDate 2007 Jan 1, WeekDate 2007 1 Mon )
+             , ( CalendarDate 2007 Dec 30, WeekDate 2007 52 Sun )
+             , ( CalendarDate 2007 Dec 31, WeekDate 2008 1 Mon )
+             , ( CalendarDate 2008 Jan 1, WeekDate 2008 1 Tue )
+             , ( CalendarDate 2008 Dec 28, WeekDate 2008 52 Sun )
+             , ( CalendarDate 2008 Dec 29, WeekDate 2009 1 Mon )
+             , ( CalendarDate 2008 Dec 30, WeekDate 2009 1 Tue )
+             , ( CalendarDate 2008 Dec 31, WeekDate 2009 1 Wed )
+             , ( CalendarDate 2009 Jan 1, WeekDate 2009 1 Thu )
+             , ( CalendarDate 2009 Dec 31, WeekDate 2009 53 Thu )
+             , ( CalendarDate 2010 Jan 1, WeekDate 2009 53 Fri )
+             , ( CalendarDate 2010 Jan 2, WeekDate 2009 53 Sat )
+             , ( CalendarDate 2010 Jan 3, WeekDate 2009 53 Sun )
              ]
                 |> List.map
                     (\( calendarDate, weekDate ) ->
@@ -76,7 +76,7 @@ testWeekDate =
 
 
 type alias CalendarDate =
-    { year : Int, month : Int, day : Int }
+    { year : Int, month : Month, day : Int }
 
 
 fromCalendarDate : CalendarDate -> Date
@@ -86,7 +86,7 @@ fromCalendarDate { year, month, day } =
 
 calendarDatesInYear : Int -> List CalendarDate
 calendarDatesInYear y =
-    List.range 1 12
+    [ Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec ]
         |> List.concatMap
             (\m -> List.range 1 (daysInMonth y m) |> List.map (CalendarDate y m))
 
@@ -96,51 +96,51 @@ isLeapYear y =
     y % 4 == 0 && y % 100 /= 0 || y % 400 == 0
 
 
-daysInMonth : Int -> Int -> Int
+daysInMonth : Int -> Month -> Int
 daysInMonth y m =
-    case m % 12 of
-        1 ->
+    case m of
+        Jan ->
             31
 
-        2 ->
+        Feb ->
             if isLeapYear y then
                 29
             else
                 28
 
-        3 ->
+        Mar ->
             31
 
-        4 ->
+        Apr ->
             30
 
-        5 ->
+        May ->
             31
 
-        6 ->
+        Jun ->
             30
 
-        7 ->
+        Jul ->
             31
 
-        8 ->
+        Aug ->
             31
 
-        9 ->
+        Sep ->
             30
 
-        10 ->
+        Oct ->
             31
 
-        11 ->
+        Nov ->
             30
 
-        _ ->
+        Dec ->
             31
 
 
 type alias WeekDate =
-    { weekYear : Int, week : Int, weekday : Int }
+    { weekYear : Int, week : Int, weekday : Weekday }
 
 
 fromWeekDate : WeekDate -> Date

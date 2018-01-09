@@ -187,7 +187,7 @@ toWeekDate rd =
             weekdayNumber rd
 
         wy =
-            -- `year thursday`
+            -- `year <thursday of this week>`
             year (rd + (4 - wdn))
 
         week1Day1 =
@@ -197,6 +197,50 @@ toWeekDate rd =
     , week = 1 + (rd - week1Day1) // 7
     , weekday = wdn |> numberToWeekday
     }
+
+
+
+-- extractions (convenience)
+
+
+ordinalDay : RataDie -> Int
+ordinalDay =
+    toOrdinalDate >> .ordinalDay
+
+
+month : RataDie -> Month
+month =
+    toCalendarDate >> .month
+
+
+monthNumber : RataDie -> Int
+monthNumber =
+    month >> monthToNumber
+
+
+quarter : RataDie -> Int
+quarter =
+    monthNumber >> toFloat >> (\n -> n / 3) >> ceiling
+
+
+day : RataDie -> Int
+day =
+    toCalendarDate >> .day
+
+
+weekYear : RataDie -> Int
+weekYear =
+    toWeekDate >> .weekYear
+
+
+week : RataDie -> Int
+week =
+    toWeekDate >> .week
+
+
+weekday : RataDie -> Weekday
+weekday =
+    toWeekDate >> .weekday
 
 
 

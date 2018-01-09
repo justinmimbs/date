@@ -11,31 +11,64 @@ type alias Date =
 
 testCalendarDate : Test
 testCalendarDate =
-    describe "[from|to]CalendarDate"
-        (List.concat
-            [ List.range 1897 1905
-            , List.range 1997 2025
-            ]
-            |> List.concatMap calendarDatesInYear
-            |> List.map
-                (\calendarDate ->
-                    test (toString calendarDate) <|
-                        \() -> expectIsomorphism fromCalendarDate Date.toCalendarDate calendarDate
-                )
-        )
+    describe "CalendarDate"
+        [ describe "CalendarDate and Date are are isomorphic"
+            (List.concat
+                [ List.range 1897 1905
+                , List.range 1997 2025
+                ]
+                |> List.concatMap calendarDatesInYear
+                |> List.map
+                    (\calendarDate ->
+                        test (toString calendarDate) <|
+                            \() -> expectIsomorphism fromCalendarDate Date.toCalendarDate calendarDate
+                    )
+            )
+        , test "fromCalendarDate produces a contiguous list of integers from a contiguous list of calendar dates" <|
+            \() ->
+                List.range 1997 2025
+                    |> List.concatMap (calendarDatesInYear >> List.map fromCalendarDate)
+                    |> Expect.equal (List.range (Date.fromCalendarDate 1997 1 1) (Date.fromCalendarDate 2025 12 31))
+        ]
 
 
 testWeekDate : Test
 testWeekDate =
-    describe "[to|from]WeekDate"
-        (List.range 1997 2025
-            |> List.concatMap calendarDatesInYear
-            |> List.map
-                (\calendarDate ->
-                    test (toString calendarDate) <|
-                        \() -> expectIsomorphism Date.toWeekDate fromWeekDate (fromCalendarDate calendarDate)
-                )
-        )
+    describe "WeekDate"
+        [ describe "WeekDate and Date are isomorphic"
+            (List.range 1997 2025
+                |> List.concatMap calendarDatesInYear
+                |> List.map
+                    (\calendarDate ->
+                        test (toString calendarDate) <|
+                            \() -> expectIsomorphism Date.toWeekDate fromWeekDate (fromCalendarDate calendarDate)
+                    )
+            )
+        , describe "toWeekDate produces results that match samples"
+            ([ ( CalendarDate 2005 1 1, WeekDate 2004 53 6 )
+             , ( CalendarDate 2005 1 2, WeekDate 2004 53 7 )
+             , ( CalendarDate 2005 12 31, WeekDate 2005 52 6 )
+             , ( CalendarDate 2007 1 1, WeekDate 2007 1 1 )
+             , ( CalendarDate 2007 12 30, WeekDate 2007 52 7 )
+             , ( CalendarDate 2007 12 31, WeekDate 2008 1 1 )
+             , ( CalendarDate 2008 1 1, WeekDate 2008 1 2 )
+             , ( CalendarDate 2008 12 28, WeekDate 2008 52 7 )
+             , ( CalendarDate 2008 12 29, WeekDate 2009 1 1 )
+             , ( CalendarDate 2008 12 30, WeekDate 2009 1 2 )
+             , ( CalendarDate 2008 12 31, WeekDate 2009 1 3 )
+             , ( CalendarDate 2009 1 1, WeekDate 2009 1 4 )
+             , ( CalendarDate 2009 12 31, WeekDate 2009 53 4 )
+             , ( CalendarDate 2010 1 1, WeekDate 2009 53 5 )
+             , ( CalendarDate 2010 1 2, WeekDate 2009 53 6 )
+             , ( CalendarDate 2010 1 3, WeekDate 2009 53 7 )
+             ]
+                |> List.map
+                    (\( calendarDate, weekDate ) ->
+                        test (toString calendarDate) <|
+                            \() -> fromCalendarDate calendarDate |> Date.toWeekDate |> Expect.equal weekDate
+                    )
+            )
+        ]
 
 
 
@@ -121,4 +154,4 @@ fromWeekDate { weekYear, week, weekday } =
 
 expectIsomorphism : (x -> y) -> (y -> x) -> x -> Expectation
 expectIsomorphism xToY yToX x =
-    Expect.equal x (x |> xToY |> yToX)
+    x |> xToY |> yToX |> Expect.equal x

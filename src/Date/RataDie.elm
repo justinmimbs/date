@@ -7,9 +7,12 @@ module Date.RataDie
         , fromOrdinalDate
         , fromWeekDate
         , toCalendarDate
+        , toFormattedString
         , toOrdinalDate
         , toWeekDate
         )
+
+import Regex exposing (Regex)
 
 
 type alias RataDie =
@@ -197,50 +200,6 @@ toWeekDate rd =
     , week = 1 + (rd - week1Day1) // 7
     , weekday = wdn |> numberToWeekday
     }
-
-
-
--- extractions (convenience)
-
-
-ordinalDay : RataDie -> Int
-ordinalDay =
-    toOrdinalDate >> .ordinalDay
-
-
-month : RataDie -> Month
-month =
-    toCalendarDate >> .month
-
-
-monthNumber : RataDie -> Int
-monthNumber =
-    month >> monthToNumber
-
-
-quarter : RataDie -> Int
-quarter =
-    monthNumber >> toFloat >> (\n -> n / 3) >> ceiling
-
-
-day : RataDie -> Int
-day =
-    toCalendarDate >> .day
-
-
-weekYear : RataDie -> Int
-weekYear =
-    toWeekDate >> .weekYear
-
-
-week : RataDie -> Int
-week =
-    toWeekDate >> .week
-
-
-weekday : RataDie -> Weekday
-weekday =
-    toWeekDate >> .weekday
 
 
 
@@ -465,3 +424,336 @@ numberToWeekday wdn =
 
         _ ->
             Sun
+
+
+
+-- extractions (convenience)
+
+
+ordinalDay : RataDie -> Int
+ordinalDay =
+    toOrdinalDate >> .ordinalDay
+
+
+month : RataDie -> Month
+month =
+    toCalendarDate >> .month
+
+
+monthNumber : RataDie -> Int
+monthNumber =
+    month >> monthToNumber
+
+
+quarter : RataDie -> Int
+quarter =
+    monthNumber >> toFloat >> (\n -> n / 3) >> ceiling
+
+
+day : RataDie -> Int
+day =
+    toCalendarDate >> .day
+
+
+weekYear : RataDie -> Int
+weekYear =
+    toWeekDate >> .weekYear
+
+
+week : RataDie -> Int
+week =
+    toWeekDate >> .week
+
+
+weekday : RataDie -> Weekday
+weekday =
+    toWeekDate >> .weekday
+
+
+
+-- formatting (based on Date Format Patterns in Unicode Technical Standard #35)
+
+
+ordinalSuffix : Int -> String
+ordinalSuffix n =
+    let
+        -- use 2-digit number
+        nn =
+            n % 100
+    in
+    case
+        min
+            (if nn < 20 then
+                nn
+             else
+                nn % 10
+            )
+            4
+    of
+        1 ->
+            "st"
+
+        2 ->
+            "nd"
+
+        3 ->
+            "rd"
+
+        _ ->
+            "th"
+
+
+withOrdinalSuffix : Int -> String
+withOrdinalSuffix n =
+    toString n ++ ordinalSuffix n
+
+
+{-| Matches a series of pattern characters, or a single-quoted string (which
+may contain '' inside, representing an escaped single-quote).
+-}
+patternMatches : Regex
+patternMatches =
+    Regex.regex "([yYQMwdDEe])\\1*|'(?:[^']|'')*?'(?!')"
+
+
+nameForm : Int -> String
+nameForm length =
+    case length of
+        1 ->
+            "abbreviated"
+
+        2 ->
+            "abbreviated"
+
+        3 ->
+            "abbreviated"
+
+        4 ->
+            "full"
+
+        5 ->
+            "narrow"
+
+        6 ->
+            "short"
+
+        _ ->
+            "invalid"
+
+
+format : RataDie -> String -> String
+format date match =
+    let
+        char =
+            String.left 1 match
+
+        length =
+            String.length match
+    in
+    case char of
+        "y" ->
+            case length of
+                2 ->
+                    date |> year |> toString |> String.padLeft 2 '0' |> String.right 2
+
+                _ ->
+                    date |> year |> toString |> String.padLeft length '0'
+
+        "Y" ->
+            case length of
+                2 ->
+                    date |> weekYear |> toString |> String.padLeft 2 '0' |> String.right 2
+
+                _ ->
+                    date |> weekYear |> toString |> String.padLeft length '0'
+
+        "Q" ->
+            case length of
+                1 ->
+                    date |> quarter |> toString
+
+                2 ->
+                    date |> quarter |> toString
+
+                3 ->
+                    date |> quarter |> toString |> (++) "Q"
+
+                4 ->
+                    date |> quarter |> withOrdinalSuffix
+
+                5 ->
+                    date |> quarter |> toString
+
+                _ ->
+                    ""
+
+        "M" ->
+            case length of
+                1 ->
+                    date |> monthNumber |> toString
+
+                2 ->
+                    date |> monthNumber |> toString |> String.padLeft 2 '0'
+
+                3 ->
+                    date |> month |> monthToName |> String.left 3
+
+                4 ->
+                    date |> month |> monthToName
+
+                5 ->
+                    date |> month |> monthToName |> String.left 1
+
+                _ ->
+                    ""
+
+        "w" ->
+            case length of
+                1 ->
+                    date |> week |> toString
+
+                2 ->
+                    date |> week |> toString |> String.padLeft 2 '0'
+
+                _ ->
+                    ""
+
+        "d" ->
+            case length of
+                1 ->
+                    date |> day |> toString
+
+                2 ->
+                    date |> day |> toString |> String.padLeft 2 '0'
+
+                -- non-standard
+                3 ->
+                    date |> day |> withOrdinalSuffix
+
+                _ ->
+                    ""
+
+        "D" ->
+            case length of
+                1 ->
+                    date |> ordinalDay |> toString
+
+                2 ->
+                    date |> ordinalDay |> toString |> String.padLeft 2 '0'
+
+                3 ->
+                    date |> ordinalDay |> toString |> String.padLeft 3 '0'
+
+                _ ->
+                    ""
+
+        "E" ->
+            case nameForm length of
+                "abbreviated" ->
+                    date |> weekday |> weekdayToName |> String.left 3
+
+                "full" ->
+                    date |> weekday |> weekdayToName
+
+                "narrow" ->
+                    date |> weekday |> weekdayToName |> String.left 1
+
+                "short" ->
+                    date |> weekday |> weekdayToName |> String.left 2
+
+                _ ->
+                    ""
+
+        "e" ->
+            case length of
+                1 ->
+                    date |> weekdayNumber |> toString
+
+                2 ->
+                    date |> weekdayNumber |> toString
+
+                _ ->
+                    format date (String.toUpper match)
+
+        "'" ->
+            if match == "''" then
+                "'"
+            else
+                String.slice 1 -1 match |> Regex.replace Regex.All (Regex.regex "''") (\_ -> "'")
+
+        _ ->
+            ""
+
+
+toFormattedString : String -> RataDie -> String
+toFormattedString pattern date =
+    Regex.replace Regex.All patternMatches (.match >> format date) pattern
+
+
+
+-- lookups (names)
+
+
+monthToName : Month -> String
+monthToName m =
+    case m of
+        Jan ->
+            "January"
+
+        Feb ->
+            "February"
+
+        Mar ->
+            "March"
+
+        Apr ->
+            "April"
+
+        May ->
+            "May"
+
+        Jun ->
+            "June"
+
+        Jul ->
+            "July"
+
+        Aug ->
+            "August"
+
+        Sep ->
+            "September"
+
+        Oct ->
+            "October"
+
+        Nov ->
+            "November"
+
+        Dec ->
+            "December"
+
+
+weekdayToName : Weekday -> String
+weekdayToName d =
+    case d of
+        Mon ->
+            "Monday"
+
+        Tue ->
+            "Tuesday"
+
+        Wed ->
+            "Wednesday"
+
+        Thu ->
+            "Thursday"
+
+        Fri ->
+            "Friday"
+
+        Sat ->
+            "Saturday"
+
+        Sun ->
+            "Sunday"

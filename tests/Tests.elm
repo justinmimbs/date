@@ -1,6 +1,6 @@
 module Tests exposing (..)
 
-import Date.RataDie as Date exposing (Month(..), Weekday(..))
+import Date.RataDie as Date exposing (Month(..), Unit(..), Weekday(..))
 import Expect exposing (Expectation)
 import Test exposing (Test, describe, test)
 
@@ -9,8 +9,8 @@ type alias Date =
     Int
 
 
-testCalendarDate : Test
-testCalendarDate =
+test_CalendarDate : Test
+test_CalendarDate =
     describe "CalendarDate"
         [ describe "CalendarDate and Date are are isomorphic"
             (List.concat
@@ -32,8 +32,8 @@ testCalendarDate =
         ]
 
 
-testWeekDate : Test
-testWeekDate =
+test_WeekDate : Test
+test_WeekDate =
     describe "WeekDate"
         [ describe "WeekDate and Date are isomorphic"
             (List.range 1997 2025
@@ -190,6 +190,108 @@ test_toFormattedString =
                 , ( "M/d/y", "12/31/2008" )
                 , ( "''yy", "'08" )
                 ]
+        ]
+
+
+test_add : Test
+test_add =
+    let
+        toTest : ( Int, Month, Int ) -> Int -> Unit -> ( Int, Month, Int ) -> Test
+        toTest ( y1, m1, d1 ) n unit (( y2, m2, d2 ) as expected) =
+            test (toString ( y1, m1, d1 ) ++ " + " ++ toString n ++ " " ++ toString unit ++ " => " ++ toString expected) <|
+                \() ->
+                    Date.fromCalendarDate y1 m1 d1 |> Date.add unit n |> Expect.equal (Date.fromCalendarDate y2 m2 d2)
+    in
+    describe "add"
+        [ describe "add 0 x == x" <|
+            List.map
+                (\unit -> toTest ( 2000, Jan, 1 ) 0 unit ( 2000, Jan, 1 ))
+                [ Years, Months, Weeks, Days ]
+        , describe "adding positive numbers works as expected"
+            [ toTest ( 2000, Jan, 1 ) 2 Years ( 2002, Jan, 1 )
+            , toTest ( 2000, Jan, 1 ) 2 Months ( 2000, Mar, 1 )
+            , toTest ( 2000, Jan, 1 ) 2 Weeks ( 2000, Jan, 15 )
+            , toTest ( 2000, Jan, 1 ) 2 Days ( 2000, Jan, 3 )
+            , toTest ( 2000, Jan, 1 ) 18 Years ( 2018, Jan, 1 )
+            , toTest ( 2000, Jan, 1 ) 18 Months ( 2001, Jul, 1 )
+            , toTest ( 2000, Jan, 1 ) 18 Weeks ( 2000, May, 6 )
+            , toTest ( 2000, Jan, 1 ) 36 Days ( 2000, Feb, 6 )
+            ]
+        , describe "adding negative numbers works as expected"
+            [ toTest ( 2000, Jan, 1 ) -2 Years ( 1998, Jan, 1 )
+            , toTest ( 2000, Jan, 1 ) -2 Months ( 1999, Nov, 1 )
+            , toTest ( 2000, Jan, 1 ) -2 Weeks ( 1999, Dec, 18 )
+            , toTest ( 2000, Jan, 1 ) -2 Days ( 1999, Dec, 30 )
+            , toTest ( 2000, Jan, 1 ) -18 Years ( 1982, Jan, 1 )
+            , toTest ( 2000, Jan, 1 ) -18 Months ( 1998, Jul, 1 )
+            , toTest ( 2000, Jan, 1 ) -18 Weeks ( 1999, Aug, 28 )
+            , toTest ( 2000, Jan, 1 ) -18 Days ( 1999, Dec, 14 )
+            ]
+        , describe "adding Years from a leap day clamps overflow to the end of February"
+            [ toTest ( 2000, Feb, 29 ) 1 Years ( 2001, Feb, 28 )
+            , toTest ( 2000, Feb, 29 ) 4 Years ( 2004, Feb, 29 )
+            ]
+        , describe "adding Months clamps overflow to the end of a short month"
+            [ toTest ( 2000, Jan, 31 ) 1 Months ( 2000, Feb, 29 )
+            , toTest ( 2000, Jan, 31 ) 2 Months ( 2000, Mar, 31 )
+            , toTest ( 2000, Jan, 31 ) 3 Months ( 2000, Apr, 30 )
+            , toTest ( 2000, Jan, 31 ) 13 Months ( 2001, Feb, 28 )
+            ]
+        ]
+
+
+test_diff : Test
+test_diff =
+    let
+        toTest : ( Int, Month, Int ) -> ( Int, Month, Int ) -> Int -> Unit -> Test
+        toTest ( y1, m1, d1 ) ( y2, m2, d2 ) expected unit =
+            test (toString ( y2, m2, d2 ) ++ " - " ++ toString ( y1, m1, d1 ) ++ " => " ++ toString expected ++ " " ++ toString unit) <|
+                \() ->
+                    Date.diff unit (Date.fromCalendarDate y1 m1 d1) (Date.fromCalendarDate y2 m2 d2) |> Expect.equal expected
+    in
+    describe "diff"
+        [ describe "diff x x == 0" <|
+            List.map
+                (\unit -> toTest ( 2000, Jan, 1 ) ( 2000, Jan, 1 ) 0 unit)
+                [ Years, Months, Weeks, Days ]
+        , describe "diff x y == -(diff y x)" <|
+            let
+                ( x, y ) =
+                    ( Date.fromCalendarDate 2000 Jan 1, Date.fromCalendarDate 2017 Sep 28 )
+            in
+            List.map
+                (\unit -> test (toString unit) <| \() -> Date.diff unit x y |> Expect.equal (negate (Date.diff unit y x)))
+                [ Years, Months, Weeks, Days ]
+        , describe "`diff earlier later` results in positive numbers"
+            [ toTest ( 2000, Jan, 1 ) ( 2002, Jan, 1 ) 2 Years
+            , toTest ( 2000, Jan, 1 ) ( 2000, Mar, 1 ) 2 Months
+            , toTest ( 2000, Jan, 1 ) ( 2000, Jan, 15 ) 2 Weeks
+            , toTest ( 2000, Jan, 1 ) ( 2000, Jan, 3 ) 2 Days
+            , toTest ( 2000, Jan, 1 ) ( 2018, Jan, 1 ) 18 Years
+            , toTest ( 2000, Jan, 1 ) ( 2001, Jul, 1 ) 18 Months
+            , toTest ( 2000, Jan, 1 ) ( 2000, May, 6 ) 18 Weeks
+            , toTest ( 2000, Jan, 1 ) ( 2000, Feb, 6 ) 36 Days
+            ]
+        , describe "`diff later earlier` results in negative numbers"
+            [ toTest ( 2000, Jan, 1 ) ( 1998, Jan, 1 ) -2 Years
+            , toTest ( 2000, Jan, 1 ) ( 1999, Nov, 1 ) -2 Months
+            , toTest ( 2000, Jan, 1 ) ( 1999, Dec, 18 ) -2 Weeks
+            , toTest ( 2000, Jan, 1 ) ( 1999, Dec, 30 ) -2 Days
+            , toTest ( 2000, Jan, 1 ) ( 1982, Jan, 1 ) -18 Years
+            , toTest ( 2000, Jan, 1 ) ( 1998, Jul, 1 ) -18 Months
+            , toTest ( 2000, Jan, 1 ) ( 1999, Aug, 28 ) -18 Weeks
+            , toTest ( 2000, Jan, 1 ) ( 1999, Dec, 14 ) -18 Days
+            ]
+        , describe "diffing Years returns a number of whole years as determined by calendar date (anniversary)"
+            [ toTest ( 2000, Feb, 29 ) ( 2001, Feb, 28 ) 0 Years
+            , toTest ( 2000, Feb, 29 ) ( 2004, Feb, 29 ) 4 Years
+            ]
+        , describe "diffing Months returns a number of whole months as determined by calendar date"
+            [ toTest ( 2000, Jan, 31 ) ( 2000, Feb, 29 ) 0 Months
+            , toTest ( 2000, Jan, 31 ) ( 2000, Mar, 31 ) 2 Months
+            , toTest ( 2000, Jan, 31 ) ( 2000, Apr, 30 ) 2 Months
+            , toTest ( 2000, Jan, 31 ) ( 2001, Feb, 28 ) 12 Months
+            ]
         ]
 
 

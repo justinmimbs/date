@@ -2,7 +2,10 @@ module Date.RataDie
     exposing
         ( Month(..)
         , RataDie
+        , Unit(..)
         , Weekday(..)
+        , add
+        , diff
         , fromCalendarDate
         , fromOrdinalDate
         , fromWeekDate
@@ -757,3 +760,74 @@ weekdayToName d =
 
         Sun ->
             "Sunday"
+
+
+
+-- arithmetic
+
+
+type Unit
+    = Years
+    | Months
+    | Weeks
+    | Days
+
+
+add : Unit -> Int -> RataDie -> RataDie
+add unit n date =
+    case unit of
+        Years ->
+            date |> add Months (12 * n)
+
+        Months ->
+            let
+                { year, month, day } =
+                    date |> toCalendarDate
+
+                wholeMonths =
+                    12 * (year - 1) + monthToNumber month - 1 + n
+
+                y =
+                    wholeMonths // 12 + 1
+
+                m =
+                    wholeMonths % 12 + 1 |> numberToMonth
+            in
+            fromCalendarDate y m (day |> Basics.min (daysInMonth y m))
+
+        Weeks ->
+            date + 7 * n
+
+        Days ->
+            date + n
+
+
+{-| The number of whole months between date and 0001-01-01 plus fraction
+representing the current month. Only used for diffing months.
+-}
+toMonths : RataDie -> Float
+toMonths date =
+    let
+        { year, month, day } =
+            date |> toCalendarDate
+
+        wholeMonths =
+            12 * (year - 1) + monthToNumber month - 1
+    in
+    toFloat wholeMonths + toFloat day / 100
+
+
+diff : Unit -> RataDie -> RataDie -> Int
+diff unit date1 date2 =
+    case unit of
+        Years ->
+            (toMonths date2 - toMonths date1 |> truncate) // 12
+
+        Months ->
+            toMonths date2 - toMonths date1 |> truncate
+
+        Weeks ->
+            (date2 - date1) // 7
+
+        Days ->
+            date2 - date1

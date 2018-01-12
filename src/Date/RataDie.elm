@@ -1,11 +1,14 @@
 module Date.RataDie
     exposing
-        ( Month(..)
+        ( Interval(..)
+        , Month(..)
         , RataDie
         , Unit(..)
         , Weekday(..)
         , add
+        , ceiling
         , diff
+        , floor
         , fromCalendarDate
         , fromOrdinalDate
         , fromWeekDate
@@ -299,6 +302,10 @@ daysBeforeMonth y m =
             334 + leapDays
 
 
+
+-- conversions
+
+
 monthToNumber : Month -> Int
 monthToNumber m =
     case m of
@@ -429,6 +436,16 @@ numberToWeekday wdn =
             Sun
 
 
+monthToQuarter : Month -> Int
+monthToQuarter m =
+    (monthToNumber m + 2) // 3
+
+
+quarterToMonth : Int -> Month
+quarterToMonth q =
+    q * 3 - 2 |> numberToMonth
+
+
 
 -- extractions (convenience)
 
@@ -450,7 +467,7 @@ monthNumber =
 
 quarter : RataDie -> Int
 quarter =
-    monthNumber >> toFloat >> (\n -> n / 3) >> ceiling
+    month >> monthToQuarter
 
 
 day : RataDie -> Int
@@ -831,3 +848,97 @@ diff unit date1 date2 =
 
         Days ->
             date2 - date1
+
+
+
+-- intervals
+
+
+type Interval
+    = Year
+    | Quarter
+    | Month
+    | Week
+    | Monday
+    | Tuesday
+    | Wednesday
+    | Thursday
+    | Friday
+    | Saturday
+    | Sunday
+    | Day
+
+
+daysSincePreviousWeekday : Weekday -> RataDie -> Int
+daysSincePreviousWeekday wd date =
+    (weekdayNumber date + 7 - weekdayToNumber wd) % 7
+
+
+floor : Interval -> RataDie -> RataDie
+floor interval date =
+    let
+        { year, month, day } =
+            date |> toCalendarDate
+    in
+    case interval of
+        Year ->
+            fromCalendarDate year Jan 1
+
+        Quarter ->
+            fromCalendarDate year (month |> monthToQuarter |> quarterToMonth) 1
+
+        Month ->
+            fromCalendarDate year month 1
+
+        Week ->
+            date - daysSincePreviousWeekday Mon date
+
+        Monday ->
+            date - daysSincePreviousWeekday Mon date
+
+        Tuesday ->
+            date - daysSincePreviousWeekday Tue date
+
+        Wednesday ->
+            date - daysSincePreviousWeekday Wed date
+
+        Thursday ->
+            date - daysSincePreviousWeekday Thu date
+
+        Friday ->
+            date - daysSincePreviousWeekday Fri date
+
+        Saturday ->
+            date - daysSincePreviousWeekday Sat date
+
+        Sunday ->
+            date - daysSincePreviousWeekday Sun date
+
+        Day ->
+            date
+
+
+ceiling : Interval -> RataDie -> RataDie
+ceiling interval date =
+    let
+        floored =
+            date |> floor interval
+    in
+    if date == floored then
+        date
+    else
+        case interval of
+            Year ->
+                floored |> add Years 1
+
+            Quarter ->
+                floored |> add Months 3
+
+            Month ->
+                floored |> add Months 1
+
+            Day ->
+                date
+
+            weekday ->
+                floored |> add Weeks 1

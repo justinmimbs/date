@@ -1,6 +1,6 @@
 module Tests exposing (..)
 
-import Date.RataDie as Date exposing (Month(..), Unit(..), Weekday(..))
+import Date.RataDie as Date exposing (Interval(..), Month(..), Unit(..), Weekday(..))
 import Expect exposing (Expectation)
 import Test exposing (Test, describe, test)
 
@@ -295,6 +295,110 @@ test_diff =
         ]
 
 
+test_floor : Test
+test_floor =
+    let
+        toTest : Interval -> ( Int, Month, Int ) -> ( Int, Month, Int ) -> Test
+        toTest interval ( y1, m1, d1 ) (( y2, m2, d2 ) as expected) =
+            describe (toString interval ++ " " ++ toString ( y1, m1, d1 ))
+                [ test ("=> " ++ toString expected) <|
+                    \() -> Date.fromCalendarDate y1 m1 d1 |> Date.floor interval |> Expect.equal (Date.fromCalendarDate y2 m2 d2)
+                , test "is idempotent" <|
+                    \() -> Date.fromCalendarDate y1 m1 d1 |> expectIdempotence (Date.floor interval)
+                ]
+    in
+    describe "floor"
+        [ describe "doesn't affect a date that is already at a rounded interval"
+            [ toTest Year ( 2000, Jan, 1 ) ( 2000, Jan, 1 )
+            , toTest Quarter ( 2000, Jan, 1 ) ( 2000, Jan, 1 )
+            , toTest Month ( 2000, Jan, 1 ) ( 2000, Jan, 1 )
+            , toTest Week ( 2000, Jan, 3 ) ( 2000, Jan, 3 )
+            , toTest Monday ( 2000, Jan, 3 ) ( 2000, Jan, 3 )
+            , toTest Tuesday ( 2000, Jan, 4 ) ( 2000, Jan, 4 )
+            , toTest Wednesday ( 2000, Jan, 5 ) ( 2000, Jan, 5 )
+            , toTest Thursday ( 2000, Jan, 6 ) ( 2000, Jan, 6 )
+            , toTest Friday ( 2000, Jan, 7 ) ( 2000, Jan, 7 )
+            , toTest Saturday ( 2000, Jan, 1 ) ( 2000, Jan, 1 )
+            , toTest Sunday ( 2000, Jan, 2 ) ( 2000, Jan, 2 )
+            , toTest Day ( 2000, Jan, 1 ) ( 2000, Jan, 1 )
+            ]
+        , describe "returns the previous rounded interval"
+            [ toTest Year ( 2000, May, 21 ) ( 2000, Jan, 1 )
+            , toTest Quarter ( 2000, May, 21 ) ( 2000, Apr, 1 )
+            , toTest Month ( 2000, May, 21 ) ( 2000, May, 1 )
+            , toTest Week ( 2000, May, 21 ) ( 2000, May, 15 )
+            , toTest Monday ( 2000, May, 21 ) ( 2000, May, 15 )
+            , toTest Tuesday ( 2000, May, 21 ) ( 2000, May, 16 )
+            , toTest Wednesday ( 2000, May, 21 ) ( 2000, May, 17 )
+            , toTest Thursday ( 2000, May, 21 ) ( 2000, May, 18 )
+            , toTest Friday ( 2000, May, 21 ) ( 2000, May, 19 )
+            , toTest Saturday ( 2000, May, 21 ) ( 2000, May, 20 )
+            , toTest Sunday ( 2000, May, 22 ) ( 2000, May, 21 )
+            , toTest Day ( 2000, May, 21 ) ( 2000, May, 21 )
+            ]
+        , describe "rounds to Quarter as expected" <|
+            List.concatMap
+                (\( ms, expected ) -> ms |> List.map (\m -> toTest Quarter ( 2000, m, 15 ) expected))
+                [ ( [ Jan, Feb, Mar ], ( 2000, Jan, 1 ) )
+                , ( [ Apr, May, Jun ], ( 2000, Apr, 1 ) )
+                , ( [ Jul, Aug, Sep ], ( 2000, Jul, 1 ) )
+                , ( [ Oct, Nov, Dec ], ( 2000, Oct, 1 ) )
+                ]
+        ]
+
+
+test_ceiling : Test
+test_ceiling =
+    let
+        toTest : Interval -> ( Int, Month, Int ) -> ( Int, Month, Int ) -> Test
+        toTest interval ( y1, m1, d1 ) (( y2, m2, d2 ) as expected) =
+            describe (toString interval ++ " " ++ toString ( y1, m1, d1 ))
+                [ test ("=> " ++ toString expected) <|
+                    \() -> Date.fromCalendarDate y1 m1 d1 |> Date.ceiling interval |> Expect.equal (Date.fromCalendarDate y2 m2 d2)
+                , test "is idempotent" <|
+                    \() -> Date.fromCalendarDate y1 m1 d1 |> expectIdempotence (Date.ceiling interval)
+                ]
+    in
+    describe "ceiling"
+        [ describe "doesn't affect a date that is already at a rounded interval"
+            [ toTest Year ( 2000, Jan, 1 ) ( 2000, Jan, 1 )
+            , toTest Quarter ( 2000, Jan, 1 ) ( 2000, Jan, 1 )
+            , toTest Month ( 2000, Jan, 1 ) ( 2000, Jan, 1 )
+            , toTest Week ( 2000, Jan, 3 ) ( 2000, Jan, 3 )
+            , toTest Monday ( 2000, Jan, 3 ) ( 2000, Jan, 3 )
+            , toTest Tuesday ( 2000, Jan, 4 ) ( 2000, Jan, 4 )
+            , toTest Wednesday ( 2000, Jan, 5 ) ( 2000, Jan, 5 )
+            , toTest Thursday ( 2000, Jan, 6 ) ( 2000, Jan, 6 )
+            , toTest Friday ( 2000, Jan, 7 ) ( 2000, Jan, 7 )
+            , toTest Saturday ( 2000, Jan, 1 ) ( 2000, Jan, 1 )
+            , toTest Sunday ( 2000, Jan, 2 ) ( 2000, Jan, 2 )
+            , toTest Day ( 2000, Jan, 1 ) ( 2000, Jan, 1 )
+            ]
+        , describe "returns the next rounded interval"
+            [ toTest Year ( 2000, May, 21 ) ( 2001, Jan, 1 )
+            , toTest Quarter ( 2000, May, 21 ) ( 2000, Jul, 1 )
+            , toTest Month ( 2000, May, 21 ) ( 2000, Jun, 1 )
+            , toTest Week ( 2000, May, 21 ) ( 2000, May, 22 )
+            , toTest Monday ( 2000, May, 21 ) ( 2000, May, 22 )
+            , toTest Tuesday ( 2000, May, 21 ) ( 2000, May, 23 )
+            , toTest Wednesday ( 2000, May, 21 ) ( 2000, May, 24 )
+            , toTest Thursday ( 2000, May, 21 ) ( 2000, May, 25 )
+            , toTest Friday ( 2000, May, 21 ) ( 2000, May, 26 )
+            , toTest Saturday ( 2000, May, 21 ) ( 2000, May, 27 )
+            , toTest Sunday ( 2000, May, 22 ) ( 2000, May, 28 )
+            , toTest Day ( 2000, May, 21 ) ( 2000, May, 21 )
+            ]
+        , describe "rounds to Quarter as expected" <|
+            List.concatMap
+                (\( ms, expected ) -> ms |> List.map (\m -> toTest Quarter ( 2000, m, 15 ) expected))
+                [ ( [ Jan, Feb, Mar ], ( 2000, Apr, 1 ) )
+                , ( [ Apr, May, Jun ], ( 2000, Jul, 1 ) )
+                , ( [ Jul, Aug, Sep ], ( 2000, Oct, 1 ) )
+                , ( [ Oct, Nov, Dec ], ( 2001, Jan, 1 ) )
+                ]
+        ]
+
+
 
 -- helpers
 
@@ -379,3 +483,8 @@ fromWeekDate { weekYear, week, weekday } =
 expectIsomorphism : (x -> y) -> (y -> x) -> x -> Expectation
 expectIsomorphism xToY yToX x =
     x |> xToY |> yToX |> Expect.equal x
+
+
+expectIdempotence : (x -> x) -> x -> Expectation
+expectIdempotence f x =
+    f (f x) |> Expect.equal (f x)

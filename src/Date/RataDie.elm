@@ -12,6 +12,7 @@ module Date.RataDie
         , fromCalendarDate
         , fromOrdinalDate
         , fromWeekDate
+        , range
         , toCalendarDate
         , toFormattedString
         , toOrdinalDate
@@ -918,6 +919,25 @@ floor interval date =
             date
 
 
+intervalToUnits : Interval -> ( Int, Unit )
+intervalToUnits interval =
+    case interval of
+        Year ->
+            ( 1, Years )
+
+        Quarter ->
+            ( 3, Months )
+
+        Month ->
+            ( 1, Months )
+
+        Day ->
+            ( 1, Days )
+
+        week ->
+            ( 1, Weeks )
+
+
 ceiling : Interval -> RataDie -> RataDie
 ceiling interval date =
     let
@@ -927,18 +947,28 @@ ceiling interval date =
     if date == floored then
         date
     else
-        case interval of
-            Year ->
-                floored |> add Years 1
+        let
+            ( n, unit ) =
+                interval |> intervalToUnits
+        in
+        floored |> add unit n
 
-            Quarter ->
-                floored |> add Months 3
 
-            Month ->
-                floored |> add Months 1
+range : Interval -> Int -> RataDie -> RataDie -> List RataDie
+range interval step start end =
+    let
+        stepBack =
+            max 1 step |> negate
 
-            Day ->
-                date
+        ( n, unit ) =
+            interval |> intervalToUnits
+    in
+    rangeHelp [] unit (n * stepBack) start (end |> add unit (n * stepBack) |> ceiling interval)
 
-            weekday ->
-                floored |> add Weeks 1
+
+rangeHelp : List RataDie -> Unit -> Int -> RataDie -> RataDie -> List RataDie
+rangeHelp result unit step start date =
+    if date < start then
+        result
+    else
+        rangeHelp (date :: result) unit step start (date |> add unit step)

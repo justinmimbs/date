@@ -399,6 +399,104 @@ test_ceiling =
         ]
 
 
+test_range : Test
+test_range =
+    let
+        toTest : Interval -> Int -> CalendarDate -> CalendarDate -> List CalendarDate -> Test
+        toTest interval step start end expected =
+            test ([ toString interval, toString step, toString start, toString end ] |> String.join " ") <|
+                \() ->
+                    Date.range interval step (fromCalendarDate start) (fromCalendarDate end)
+                        |> Expect.equal (expected |> List.map fromCalendarDate)
+    in
+    describe "range"
+        [ describe "returns a list of dates at rounded intervals which may include start and must exclude end"
+            [ toTest Year 10 (CalendarDate 2000 Jan 1) (CalendarDate 2030 Jan 1) <|
+                [ CalendarDate 2000 Jan 1
+                , CalendarDate 2010 Jan 1
+                , CalendarDate 2020 Jan 1
+                ]
+            , toTest Quarter 1 (CalendarDate 2000 Jan 1) (CalendarDate 2000 Sep 1) <|
+                [ CalendarDate 2000 Jan 1
+                , CalendarDate 2000 Apr 1
+                , CalendarDate 2000 Jul 1
+                ]
+            , toTest Month 2 (CalendarDate 2000 Jan 1) (CalendarDate 2000 Jul 1) <|
+                [ CalendarDate 2000 Jan 1
+                , CalendarDate 2000 Mar 1
+                , CalendarDate 2000 May 1
+                ]
+            , toTest Week 2 (CalendarDate 2000 Jan 1) (CalendarDate 2000 Feb 14) <|
+                [ CalendarDate 2000 Jan 3
+                , CalendarDate 2000 Jan 17
+                , CalendarDate 2000 Jan 31
+                ]
+            , toTest Monday 2 (CalendarDate 2000 Jan 1) (CalendarDate 2000 Feb 14) <|
+                [ CalendarDate 2000 Jan 3
+                , CalendarDate 2000 Jan 17
+                , CalendarDate 2000 Jan 31
+                ]
+            , toTest Tuesday 2 (CalendarDate 2000 Jan 1) (CalendarDate 2000 Feb 15) <|
+                [ CalendarDate 2000 Jan 4
+                , CalendarDate 2000 Jan 18
+                , CalendarDate 2000 Feb 1
+                ]
+            , toTest Wednesday 2 (CalendarDate 2000 Jan 1) (CalendarDate 2000 Feb 16) <|
+                [ CalendarDate 2000 Jan 5
+                , CalendarDate 2000 Jan 19
+                , CalendarDate 2000 Feb 2
+                ]
+            , toTest Thursday 2 (CalendarDate 2000 Jan 1) (CalendarDate 2000 Feb 17) <|
+                [ CalendarDate 2000 Jan 6
+                , CalendarDate 2000 Jan 20
+                , CalendarDate 2000 Feb 3
+                ]
+            , toTest Friday 2 (CalendarDate 2000 Jan 1) (CalendarDate 2000 Feb 18) <|
+                [ CalendarDate 2000 Jan 7
+                , CalendarDate 2000 Jan 21
+                , CalendarDate 2000 Feb 4
+                ]
+            , toTest Saturday 2 (CalendarDate 2000 Jan 1) (CalendarDate 2000 Feb 12) <|
+                [ CalendarDate 2000 Jan 1
+                , CalendarDate 2000 Jan 15
+                , CalendarDate 2000 Jan 29
+                ]
+            , toTest Sunday 2 (CalendarDate 2000 Jan 1) (CalendarDate 2000 Feb 13) <|
+                [ CalendarDate 2000 Jan 2
+                , CalendarDate 2000 Jan 16
+                , CalendarDate 2000 Jan 30
+                ]
+            , toTest Day 2 (CalendarDate 2000 Jan 1) (CalendarDate 2000 Jan 7) <|
+                [ CalendarDate 2000 Jan 1
+                , CalendarDate 2000 Jan 3
+                , CalendarDate 2000 Jan 5
+                ]
+            ]
+        , test "returns a list of days as expected" <|
+            \() ->
+                Date.range Day 1 (Date.fromCalendarDate 2000 Jan 1) (Date.fromCalendarDate 2001 Jan 1)
+                    |> Expect.equal (calendarDatesInYear 2000 |> List.map fromCalendarDate)
+        , test "can return the empty list" <|
+            \() ->
+                Date.range Day 1 (Date.fromCalendarDate 2000 Jan 1) (Date.fromCalendarDate 2000 Jan 1)
+                    |> Expect.equal []
+        , describe "can return a large list (tail recursion)"
+            [ let
+                start =
+                    Date.fromCalendarDate 1950 Jan 1
+
+                end =
+                    Date.fromCalendarDate 2050 Jan 1
+
+                expectedLength =
+                    Date.diff Days start end
+              in
+              test ("length: " ++ toString expectedLength) <|
+                \() -> Date.range Day 1 start end |> List.length |> Expect.equal expectedLength
+            ]
+        ]
+
+
 
 -- helpers
 

@@ -497,6 +497,47 @@ test_range =
         ]
 
 
+test_fromIsoString : Test
+test_fromIsoString =
+    let
+        toTest : ( String, ( Int, Month, Int ) ) -> Test
+        toTest ( string, ( y, m, d ) as expected ) =
+            test (string ++ " => " ++ toString expected) <|
+                \() -> Date.fromIsoString string |> Expect.equal (Just (Date.fromCalendarDate y m d))
+    in
+    describe "fromIsoString"
+        [ describe "converts ISO 8601 date strings in basic format" <|
+            List.map toTest
+                [ ( "2008", ( 2008, Jan, 1 ) )
+                , ( "200812", ( 2008, Dec, 1 ) )
+                , ( "20081231", ( 2008, Dec, 31 ) )
+                , ( "2009W01", ( 2008, Dec, 29 ) )
+                , ( "2009W014", ( 2009, Jan, 1 ) )
+                , ( "2008061", ( 2008, Mar, 1 ) )
+                ]
+        , describe "converts ISO 8601 date strings in extended format" <|
+            List.map toTest
+                [ ( "2008-12", ( 2008, Dec, 1 ) )
+                , ( "2008-12-31", ( 2008, Dec, 31 ) )
+                , ( "2009-W01", ( 2008, Dec, 29 ) )
+                , ( "2009-W01-4", ( 2009, Jan, 1 ) )
+                , ( "2008-061", ( 2008, Mar, 1 ) )
+                ]
+        , describe "returns Nothing on invalid date strings" <|
+            List.map
+                (\s -> test s <| \() -> Date.fromIsoString s |> Expect.equal Nothing)
+                [ "200812-31"
+                , "2008-1231"
+                , "2009W01-4"
+                , "2009-W014"
+                , "2008-012-31"
+                , "2008-12-031"
+                , "2009-W01-8"
+                , "2008-0061"
+                ]
+        ]
+
+
 
 -- helpers
 

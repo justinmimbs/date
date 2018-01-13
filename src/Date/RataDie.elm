@@ -10,6 +10,7 @@ module Date.RataDie
         , diff
         , floor
         , fromCalendarDate
+        , fromIsoString
         , fromOrdinalDate
         , fromWeekDate
         , range
@@ -146,6 +147,72 @@ fromCalendarDate y m d =
 fromWeekDate : Int -> Int -> Weekday -> RataDie
 fromWeekDate wy w wd =
     daysBeforeWeekYear wy + (w - 1) * 7 + (wd |> weekdayToNumber)
+
+
+
+-- ISO 8601
+
+
+isoDateRegex : Regex
+isoDateRegex =
+    let
+        year =
+            -- yyyy
+            -- 1
+            "(\\d{4})"
+
+        cal =
+            --       mm            dd
+            -- 2     3             4
+            "(\\-)?(\\d{2})(?:\\2(\\d{2}))?"
+
+        week =
+            --        ww            d
+            -- 5      6             7
+            "(\\-)?W(\\d{2})(?:\\5([1-7]))?"
+
+        ord =
+            --     ddd
+            --     8
+            "\\-?(\\d{3})"
+    in
+    Regex.regex <| "^" ++ year ++ "(?:" ++ cal ++ "|" ++ week ++ "|" ++ ord ++ ")?$"
+
+
+fromIsoStringMatches : List (Maybe String) -> Maybe RataDie
+fromIsoStringMatches =
+    let
+        toInt : Maybe String -> Int
+        toInt =
+            Maybe.andThen (String.toInt >> Result.toMaybe) >> Maybe.withDefault 1
+    in
+    \matches ->
+        case matches of
+            [ Just yyyy, _, mm, dd, _, ww, d, ddd ] ->
+                Just <|
+                    let
+                        y =
+                            yyyy |> String.toInt |> Result.withDefault 1
+                    in
+                    case ( mm, ww ) of
+                        ( Just _, Nothing ) ->
+                            fromCalendarDate y (mm |> toInt |> numberToMonth) (dd |> toInt)
+
+                        ( Nothing, Just _ ) ->
+                            fromWeekDate y (ww |> toInt) (d |> toInt |> numberToWeekday)
+
+                        _ ->
+                            fromOrdinalDate y (ddd |> toInt)
+
+            _ ->
+                Nothing
+
+
+fromIsoString : String -> Maybe RataDie
+fromIsoString =
+    Regex.find (Regex.AtMost 1) isoDateRegex
+        >> List.head
+        >> Maybe.andThen (.submatches >> fromIsoStringMatches)
 
 
 
@@ -537,8 +604,8 @@ patternMatches =
     Regex.regex "([yYQMwdDEe])\\1*|'(?:[^']|'')*?'(?!')"
 
 
-nameForm : Int -> String
-nameForm length =
+toNameForm : Int -> String
+toNameForm length =
     case length of
         1 ->
             "abbreviated"
@@ -669,7 +736,7 @@ format date match =
                     ""
 
         "E" ->
-            case nameForm length of
+            case length |> toNameForm of
                 "abbreviated" ->
                     date |> weekday |> weekdayToName |> String.left 3
 

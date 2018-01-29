@@ -7,17 +7,28 @@ module Date.RataDie
         , Weekday(..)
         , add
         , ceiling
+        , day
         , diff
+        , firstOfMonth
+        , firstOfWeekYear
+        , firstOfYear
         , floor
-        , fromCalendarDate
         , fromIsoString
-        , fromOrdinalDate
-        , fromWeekDate
+        , month
+        , monthNumber
+        , ordinalDay
+        , quarter
         , range
         , toCalendarDate
         , toFormattedString
+        , toIsoString
         , toOrdinalDate
         , toWeekDate
+        , weekNumber
+        , weekYear
+        , weekday
+        , weekdayNumber
+        , year
         )
 
 import Regex exposing (Regex)
@@ -61,7 +72,7 @@ isLeapYear y =
     y % 4 == 0 && y % 100 /= 0 || y % 400 == 0
 
 
-daysBeforeYear : Int -> RataDie
+daysBeforeYear : Int -> Int
 daysBeforeYear y1 =
     let
         y =
@@ -73,7 +84,17 @@ daysBeforeYear y1 =
     365 * y + leapYears
 
 
-daysBeforeWeekYear : Int -> RataDie
+weekdayNumber : RataDie -> Int
+weekdayNumber rd =
+    case rd % 7 of
+        0 ->
+            7
+
+        n ->
+            n
+
+
+daysBeforeWeekYear : Int -> Int
 daysBeforeWeekYear y =
     let
         jan4 =
@@ -82,8 +103,37 @@ daysBeforeWeekYear y =
     jan4 - weekdayNumber jan4
 
 
+is53WeekYear : Int -> Bool
+is53WeekYear y =
+    let
+        wdnJan1 =
+            daysBeforeYear y + 1 |> weekdayNumber
+    in
+    -- any year starting on Thursday and any leap year starting on Wednesday
+    wdnJan1 == 4 || (wdnJan1 == 3 && isLeapYear y)
 
--- extractions
+
+
+-- create
+
+
+firstOfYear : Int -> RataDie
+firstOfYear y =
+    daysBeforeYear y + 1
+
+
+firstOfMonth : Int -> Month -> RataDie
+firstOfMonth y m =
+    daysBeforeYear y + daysBeforeMonth y m + 1
+
+
+firstOfWeekYear : Int -> RataDie
+firstOfWeekYear wy =
+    daysBeforeWeekYear wy + 1
+
+
+
+-- extract
 
 
 year : RataDie -> Int
@@ -113,16 +163,6 @@ year rd =
     n400 * 400 + n100 * 100 + n4 * 4 + n1 + n
 
 
-weekdayNumber : RataDie -> Int
-weekdayNumber rd =
-    case rd % 7 of
-        0 ->
-            7
-
-        n ->
-            n
-
-
 {-| integer division, returning (Quotient, Remainder)
 -}
 divideInt : Int -> Int -> ( Int, Int )
@@ -131,22 +171,47 @@ divideInt a b =
 
 
 
--- from
+-- from parts
 
 
-fromOrdinalDate : Int -> Int -> RataDie
-fromOrdinalDate y od =
-    daysBeforeYear y + od
+fromOrdinalParts : Int -> Int -> Result String RataDie
+fromOrdinalParts y od =
+    if
+        (od |> isBetween 1 365)
+            || (od == 366 && isLeapYear y)
+    then
+        Ok <| daysBeforeYear y + od
+    else
+        Err <| "Invalid ordinal date (" ++ toString y ++ ", " ++ toString od ++ ")"
 
 
-fromCalendarDate : Int -> Month -> Int -> RataDie
-fromCalendarDate y m d =
-    daysBeforeYear y + daysBeforeMonth y m + d
+fromCalendarParts : Int -> Int -> Int -> Result String RataDie
+fromCalendarParts y mn d =
+    if
+        (mn |> isBetween 1 12)
+            && (d |> isBetween 1 (daysInMonth y (mn |> numberToMonth)))
+    then
+        Ok <| daysBeforeYear y + daysBeforeMonth y (mn |> numberToMonth) + d
+    else
+        Err <| "Invalid calendar date (" ++ toString y ++ ", " ++ toString mn ++ ", " ++ toString d ++ ")"
 
 
-fromWeekDate : Int -> Int -> Weekday -> RataDie
-fromWeekDate wy w wd =
-    daysBeforeWeekYear wy + (w - 1) * 7 + (wd |> weekdayToNumber)
+fromWeekParts : Int -> Int -> Int -> Result String RataDie
+fromWeekParts wy wn wdn =
+    if
+        (wdn |> isBetween 1 7)
+            && ((wn |> isBetween 1 52)
+                    || (wn == 53 && is53WeekYear wy)
+               )
+    then
+        Ok <| daysBeforeWeekYear wy + (wn - 1) * 7 + wdn
+    else
+        Err <| "Invalid week date (" ++ toString wy ++ ", " ++ toString wn ++ ", " ++ toString wdn ++ ")"
+
+
+isBetween : Int -> Int -> Int -> Bool
+isBetween a b x =
+    a <= x && x <= b
 
 
 
@@ -169,7 +234,7 @@ isoDateRegex =
         week =
             --        ww            d
             -- 5      6             7
-            "(\\-)?W(\\d{2})(?:\\5([1-7]))?"
+            "(\\-)?W(\\d{2})(?:\\5(\\d))?"
 
         ord =
             --     ddd
@@ -179,7 +244,7 @@ isoDateRegex =
     Regex.regex <| "^" ++ year ++ "(?:" ++ cal ++ "|" ++ week ++ "|" ++ ord ++ ")?$"
 
 
-fromIsoStringMatches : List (Maybe String) -> Maybe RataDie
+fromIsoStringMatches : List (Maybe String) -> Result String RataDie
 fromIsoStringMatches =
     let
         toInt : Maybe String -> Int
@@ -188,31 +253,31 @@ fromIsoStringMatches =
     in
     \matches ->
         case matches of
-            [ Just yyyy, _, mm, dd, _, ww, d, ddd ] ->
-                Just <|
-                    let
-                        y =
-                            yyyy |> String.toInt |> Result.withDefault 1
-                    in
-                    case ( mm, ww ) of
-                        ( Just _, Nothing ) ->
-                            fromCalendarDate y (mm |> toInt |> numberToMonth) (dd |> toInt)
+            [ Just yyyy, _, mn, d, _, wn, wdn, od ] ->
+                let
+                    y =
+                        yyyy |> String.toInt |> Result.withDefault 1
+                in
+                case ( mn, wn ) of
+                    ( Just _, Nothing ) ->
+                        fromCalendarParts y (mn |> toInt) (d |> toInt)
 
-                        ( Nothing, Just _ ) ->
-                            fromWeekDate y (ww |> toInt) (d |> toInt |> numberToWeekday)
+                    ( Nothing, Just _ ) ->
+                        fromWeekParts y (wn |> toInt) (wdn |> toInt)
 
-                        _ ->
-                            fromOrdinalDate y (ddd |> toInt)
+                    _ ->
+                        fromOrdinalParts y (od |> toInt)
 
             _ ->
-                Nothing
+                Err "Unexpected results from isoDateRegex"
 
 
-fromIsoString : String -> Maybe RataDie
+fromIsoString : String -> Result String RataDie
 fromIsoString =
     Regex.find (Regex.AtMost 1) isoDateRegex
         >> List.head
-        >> Maybe.andThen (.submatches >> fromIsoStringMatches)
+        >> Result.fromMaybe "String is not in IS0 8601 date format"
+        >> Result.andThen (.submatches >> fromIsoStringMatches)
 
 
 
@@ -257,7 +322,7 @@ toCalendarDateHelp y m d =
         }
 
 
-toWeekDate : RataDie -> { weekYear : Int, week : Int, weekday : Weekday }
+toWeekDate : RataDie -> { weekYear : Int, weekNumber : Int, weekday : Weekday }
 toWeekDate rd =
     let
         wdn =
@@ -271,7 +336,7 @@ toWeekDate rd =
             daysBeforeWeekYear wy + 1
     in
     { weekYear = wy
-    , week = 1 + (rd - week1Day1) // 7
+    , weekNumber = 1 + (rd - week1Day1) // 7
     , weekday = wdn |> numberToWeekday
     }
 
@@ -548,14 +613,14 @@ weekYear =
     toWeekDate >> .weekYear
 
 
-week : RataDie -> Int
-week =
-    toWeekDate >> .week
+weekNumber : RataDie -> Int
+weekNumber =
+    toWeekDate >> .weekNumber
 
 
 weekday : RataDie -> Weekday
 weekday =
-    toWeekDate >> .weekday
+    weekdayNumber >> numberToWeekday
 
 
 
@@ -698,10 +763,10 @@ format date match =
         "w" ->
             case length of
                 1 ->
-                    date |> week |> toString
+                    date |> weekNumber |> toString
 
                 2 ->
-                    date |> week |> toString |> String.padLeft 2 '0'
+                    date |> weekNumber |> toString |> String.padLeft 2 '0'
 
                 _ ->
                     ""
@@ -778,6 +843,11 @@ toFormattedString pattern date =
     Regex.replace Regex.All patternMatches (.match >> format date) pattern
 
 
+toIsoString : RataDie -> String
+toIsoString =
+    toFormattedString "yyyy-MM-dd"
+
+
 
 -- lookups (names)
 
@@ -823,8 +893,8 @@ monthToName m =
 
 
 weekdayToName : Weekday -> String
-weekdayToName d =
-    case d of
+weekdayToName wd =
+    case wd of
         Mon ->
             "Monday"
 
@@ -878,7 +948,7 @@ add unit n date =
                 m =
                     wholeMonths % 12 + 1 |> numberToMonth
             in
-            fromCalendarDate y m (day |> Basics.min (daysInMonth y m))
+            daysBeforeYear y + daysBeforeMonth y m + min day (daysInMonth y m)
 
         Weeks ->
             date + 7 * n
@@ -944,19 +1014,23 @@ daysSincePreviousWeekday wd date =
 
 floor : Interval -> RataDie -> RataDie
 floor interval date =
-    let
-        { year, month, day } =
-            date |> toCalendarDate
-    in
     case interval of
         Year ->
-            fromCalendarDate year Jan 1
+            firstOfYear (year date)
 
         Quarter ->
-            fromCalendarDate year (month |> monthToQuarter |> quarterToMonth) 1
+            let
+                { year, month } =
+                    date |> toCalendarDate
+            in
+            firstOfMonth year (month |> monthToQuarter |> quarterToMonth)
 
         Month ->
-            fromCalendarDate year month 1
+            let
+                { year, month } =
+                    date |> toCalendarDate
+            in
+            firstOfMonth year month
 
         Week ->
             date - daysSincePreviousWeekday Mon date

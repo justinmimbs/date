@@ -13,7 +13,10 @@ module Date.RataDie
         , firstOfWeekYear
         , firstOfYear
         , floor
+        , fromCalendarDate
         , fromIsoString
+        , fromOrdinalDate
+        , fromWeekDate
         , month
         , monthNumber
         , ordinalDay
@@ -171,7 +174,7 @@ divideInt a b =
 
 
 
--- from parts
+-- constructors, strict
 
 
 fromOrdinalParts : Int -> Int -> Result String RataDie
@@ -212,6 +215,39 @@ fromWeekParts wy wn wdn =
 isBetween : Int -> Int -> Int -> Bool
 isBetween a b x =
     a <= x && x <= b
+
+
+
+-- constructors, clamping
+
+
+fromOrdinalDate : Int -> Int -> RataDie
+fromOrdinalDate y od =
+    let
+        daysInY =
+            if isLeapYear y then
+                366
+            else
+                365
+    in
+    daysBeforeYear y + (od |> clamp 1 daysInY)
+
+
+fromCalendarDate : Int -> Month -> Int -> RataDie
+fromCalendarDate y m d =
+    daysBeforeYear y + daysBeforeMonth y m + (d |> clamp 1 (daysInMonth y m))
+
+
+fromWeekDate : Int -> Int -> Weekday -> RataDie
+fromWeekDate wy wn wd =
+    let
+        weeksInWY =
+            if is53WeekYear wy then
+                53
+            else
+                52
+    in
+    daysBeforeWeekYear wy + ((wn |> clamp 1 weeksInWY) - 1) * 7 + (wd |> weekdayToNumber)
 
 
 

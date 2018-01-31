@@ -28,7 +28,7 @@ test_CalendarDate =
             \() ->
                 List.range 1997 2025
                     |> List.concatMap (calendarDatesInYear >> List.map fromCalendarDate)
-                    |> Expect.equal (List.range (fromCalendarParts 1997 Jan 1) (fromCalendarParts 2025 Dec 31))
+                    |> Expect.equal (List.range (Date.fromCalendarDate 1997 Jan 1) (Date.fromCalendarDate 2025 Dec 31))
         ]
 
 
@@ -82,7 +82,7 @@ test_toFormattedString =
     describe "toFormattedString"
         [ describe "replaces supported character patterns" <|
             List.map
-                (testDateToFormattedString (fromCalendarParts 2001 Jan 2))
+                (testDateToFormattedString (Date.fromCalendarDate 2001 Jan 2))
                 [ ( "y", "2001" )
                 , ( "yy", "01" )
                 , ( "yyy", "2001" )
@@ -133,13 +133,13 @@ test_toFormattedString =
                 ]
         , describe "ignores unsupported character patterns" <|
             List.map
-                (testDateToFormattedString (fromCalendarParts 2008 Dec 31))
+                (testDateToFormattedString (Date.fromCalendarDate 2008 Dec 31))
                 [ ( "ABCFGHIJKLNOPRSTUVWXZabcfghijklmnopqrstuvxz", "ABCFGHIJKLNOPRSTUVWXZabcfghijklmnopqrstuvxz" )
                 , ( "0123456789", "0123456789" )
                 ]
         , describe "handles escaped characters and escaped escape characters" <|
             List.map
-                (testDateToFormattedString (fromCalendarParts 2001 Jan 2))
+                (testDateToFormattedString (Date.fromCalendarDate 2001 Jan 2))
                 [ ( "'yYQMwdDEe'", "yYQMwdDEe" )
                 , ( "''' '' ''' ''", "' ' ' '" )
                 , ( "'yyyy:' yyyy", "yyyy: 2001" )
@@ -147,7 +147,7 @@ test_toFormattedString =
         , describe "formats day ordinals" <|
             List.map
                 (\( n, string ) ->
-                    testDateToFormattedString (fromCalendarParts 2001 Jan n) ( "ddd", string )
+                    testDateToFormattedString (Date.fromCalendarDate 2001 Jan n) ( "ddd", string )
                 )
                 [ ( 1, "1st" )
                 , ( 2, "2nd" )
@@ -183,7 +183,7 @@ test_toFormattedString =
                 ]
         , describe "formats with sample patterns as expected" <|
             List.map
-                (testDateToFormattedString (fromCalendarParts 2008 Dec 31))
+                (testDateToFormattedString (Date.fromCalendarDate 2008 Dec 31))
                 [ ( "yyyy-MM-dd", "2008-12-31" )
                 , ( "yyyy-DDD", "2008-366" )
                 , ( "YYYY-'W'ww-e", "2009-W01-3" )
@@ -200,7 +200,7 @@ test_add =
         toTest ( y1, m1, d1 ) n unit (( y2, m2, d2 ) as expected) =
             test (toString ( y1, m1, d1 ) ++ " + " ++ toString n ++ " " ++ toString unit ++ " => " ++ toString expected) <|
                 \() ->
-                    fromCalendarParts y1 m1 d1 |> Date.add unit n |> Expect.equal (fromCalendarParts y2 m2 d2)
+                    Date.fromCalendarDate y1 m1 d1 |> Date.add unit n |> Expect.equal (Date.fromCalendarDate y2 m2 d2)
     in
     describe "add"
         [ describe "add 0 x == x" <|
@@ -247,7 +247,7 @@ test_diff =
         toTest ( y1, m1, d1 ) ( y2, m2, d2 ) expected unit =
             test (toString ( y2, m2, d2 ) ++ " - " ++ toString ( y1, m1, d1 ) ++ " => " ++ toString expected ++ " " ++ toString unit) <|
                 \() ->
-                    Date.diff unit (fromCalendarParts y1 m1 d1) (fromCalendarParts y2 m2 d2) |> Expect.equal expected
+                    Date.diff unit (Date.fromCalendarDate y1 m1 d1) (Date.fromCalendarDate y2 m2 d2) |> Expect.equal expected
     in
     describe "diff"
         [ describe "diff x x == 0" <|
@@ -257,7 +257,7 @@ test_diff =
         , describe "diff x y == -(diff y x)" <|
             let
                 ( x, y ) =
-                    ( fromCalendarParts 2000 Jan 1, fromCalendarParts 2017 Sep 28 )
+                    ( Date.fromCalendarDate 2000 Jan 1, Date.fromCalendarDate 2017 Sep 28 )
             in
             List.map
                 (\unit -> test (toString unit) <| \() -> Date.diff unit x y |> Expect.equal (negate (Date.diff unit y x)))
@@ -302,9 +302,9 @@ test_floor =
         toTest interval ( y1, m1, d1 ) (( y2, m2, d2 ) as expected) =
             describe (toString interval ++ " " ++ toString ( y1, m1, d1 ))
                 [ test ("=> " ++ toString expected) <|
-                    \() -> fromCalendarParts y1 m1 d1 |> Date.floor interval |> Expect.equal (fromCalendarParts y2 m2 d2)
+                    \() -> Date.fromCalendarDate y1 m1 d1 |> Date.floor interval |> Expect.equal (Date.fromCalendarDate y2 m2 d2)
                 , test "is idempotent" <|
-                    \() -> fromCalendarParts y1 m1 d1 |> expectIdempotence (Date.floor interval)
+                    \() -> Date.fromCalendarDate y1 m1 d1 |> expectIdempotence (Date.floor interval)
                 ]
     in
     describe "floor"
@@ -354,9 +354,9 @@ test_ceiling =
         toTest interval ( y1, m1, d1 ) (( y2, m2, d2 ) as expected) =
             describe (toString interval ++ " " ++ toString ( y1, m1, d1 ))
                 [ test ("=> " ++ toString expected) <|
-                    \() -> fromCalendarParts y1 m1 d1 |> Date.ceiling interval |> Expect.equal (fromCalendarParts y2 m2 d2)
+                    \() -> Date.fromCalendarDate y1 m1 d1 |> Date.ceiling interval |> Expect.equal (Date.fromCalendarDate y2 m2 d2)
                 , test "is idempotent" <|
-                    \() -> fromCalendarParts y1 m1 d1 |> expectIdempotence (Date.ceiling interval)
+                    \() -> Date.fromCalendarDate y1 m1 d1 |> expectIdempotence (Date.ceiling interval)
                 ]
     in
     describe "ceiling"
@@ -492,19 +492,19 @@ test_range =
             ]
         , test "returns a list of days as expected" <|
             \() ->
-                Date.range Day 1 (fromCalendarParts 2000 Jan 1) (fromCalendarParts 2001 Jan 1)
+                Date.range Day 1 (Date.fromCalendarDate 2000 Jan 1) (Date.fromCalendarDate 2001 Jan 1)
                     |> Expect.equal (calendarDatesInYear 2000 |> List.map fromCalendarDate)
         , test "can return the empty list" <|
             \() ->
-                Date.range Day 1 (fromCalendarParts 2000 Jan 1) (fromCalendarParts 2000 Jan 1)
+                Date.range Day 1 (Date.fromCalendarDate 2000 Jan 1) (Date.fromCalendarDate 2000 Jan 1)
                     |> Expect.equal []
         , describe "can return a large list (tail recursion)"
             [ let
                 start =
-                    fromCalendarParts 1950 Jan 1
+                    Date.fromCalendarDate 1950 Jan 1
 
                 end =
-                    fromCalendarParts 2050 Jan 1
+                    Date.fromCalendarDate 2050 Jan 1
 
                 expectedLength =
                     Date.diff Days start end
@@ -521,7 +521,7 @@ test_fromIsoString =
         toTest : ( String, ( Int, Month, Int ) ) -> Test
         toTest ( string, ( y, m, d ) as expected ) =
             test (string ++ " => " ++ toString expected) <|
-                \() -> Date.fromIsoString string |> Expect.equal (Ok (fromCalendarParts y m d))
+                \() -> Date.fromIsoString string |> Expect.equal (Ok (Date.fromCalendarDate y m d))
     in
     describe "fromIsoString"
         [ describe "converts ISO 8601 date strings in basic format" <|
@@ -620,6 +620,75 @@ test_fromIsoString =
         ]
 
 
+test_fromOrdinalDate : Test
+test_fromOrdinalDate =
+    describe "fromOrdinalDate"
+        [ describe "clamps days that are out of range for the given year"
+            (List.map
+                (\( ( y, od ), expected ) ->
+                    test (toString ( y, od ) ++ " " ++ toString expected) <|
+                        \() ->
+                            Date.fromOrdinalDate y od |> Date.toOrdinalDate |> Expect.equal expected
+                )
+                [ ( ( 2000, -1 ), OrdinalDate 2000 1 )
+                , ( ( 2000, 0 ), OrdinalDate 2000 1 )
+                , ( ( 2001, 366 ), OrdinalDate 2001 365 )
+                , ( ( 2000, 367 ), OrdinalDate 2000 366 )
+                ]
+            )
+        ]
+
+
+test_fromCalendarDate : Test
+test_fromCalendarDate =
+    describe "fromCalendarDate"
+        [ describe "clamps days that are out of range for the given year and month"
+            (List.map
+                (\( ( y, m, d ), expected ) ->
+                    test (toString ( y, m, d ) ++ " " ++ toString expected) <|
+                        \() ->
+                            Date.fromCalendarDate y m d |> Date.toCalendarDate |> Expect.equal expected
+                )
+                [ ( ( 2000, Jan, -1 ), CalendarDate 2000 Jan 1 )
+                , ( ( 2000, Jan, 0 ), CalendarDate 2000 Jan 1 )
+                , ( ( 2000, Jan, 32 ), CalendarDate 2000 Jan 31 )
+                , ( ( 2000, Feb, 0 ), CalendarDate 2000 Feb 1 )
+                , ( ( 2001, Feb, 29 ), CalendarDate 2001 Feb 28 )
+                , ( ( 2000, Feb, 30 ), CalendarDate 2000 Feb 29 )
+                , ( ( 2000, Mar, 32 ), CalendarDate 2000 Mar 31 )
+                , ( ( 2000, Apr, 31 ), CalendarDate 2000 Apr 30 )
+                , ( ( 2000, May, 32 ), CalendarDate 2000 May 31 )
+                , ( ( 2000, Jun, 31 ), CalendarDate 2000 Jun 30 )
+                , ( ( 2000, Jul, 32 ), CalendarDate 2000 Jul 31 )
+                , ( ( 2000, Aug, 32 ), CalendarDate 2000 Aug 31 )
+                , ( ( 2000, Sep, 31 ), CalendarDate 2000 Sep 30 )
+                , ( ( 2000, Oct, 32 ), CalendarDate 2000 Oct 31 )
+                , ( ( 2000, Nov, 31 ), CalendarDate 2000 Nov 30 )
+                , ( ( 2000, Dec, 32 ), CalendarDate 2000 Dec 31 )
+                ]
+            )
+        ]
+
+
+test_fromWeekDate : Test
+test_fromWeekDate =
+    describe "fromWeekDate"
+        [ describe "clamps weeks that are out of range for the given week-year"
+            (List.map
+                (\( ( wy, wn, wd ), expected ) ->
+                    test (toString ( wy, wn, wd ) ++ " " ++ toString expected) <|
+                        \() ->
+                            Date.fromWeekDate wy wn wd |> Date.toWeekDate |> Expect.equal expected
+                )
+                [ ( ( 2000, -1, Mon ), WeekDate 2000 1 Mon )
+                , ( ( 2000, 0, Mon ), WeekDate 2000 1 Mon )
+                , ( ( 2000, 53, Mon ), WeekDate 2000 52 Mon )
+                , ( ( 2004, 54, Mon ), WeekDate 2004 53 Mon )
+                ]
+            )
+        ]
+
+
 
 {-
    test_is53WeekYear : Test
@@ -633,18 +702,17 @@ test_fromIsoString =
 -- helpers
 
 
+type alias OrdinalDate =
+    { year : Int, ordinalDay : Int }
+
+
 type alias CalendarDate =
     { year : Int, month : Month, day : Int }
 
 
 fromCalendarDate : CalendarDate -> Date
 fromCalendarDate { year, month, day } =
-    fromCalendarParts year month day
-
-
-fromCalendarParts : Int -> Month -> Int -> Date
-fromCalendarParts year month day =
-    Date.firstOfMonth year month |> Date.add Days (day - 1)
+    Date.fromCalendarDate year month day
 
 
 calendarDatesInYear : Int -> List CalendarDate
@@ -708,36 +776,7 @@ type alias WeekDate =
 
 fromWeekDate : WeekDate -> Date
 fromWeekDate { weekYear, weekNumber, weekday } =
-    fromWeekParts weekYear weekNumber weekday
-
-
-fromWeekParts : Int -> Int -> Weekday -> Date
-fromWeekParts weekYear weekNumber weekday =
-    let
-        weekdayNumber =
-            case weekday of
-                Mon ->
-                    1
-
-                Tue ->
-                    2
-
-                Wed ->
-                    3
-
-                Thu ->
-                    4
-
-                Fri ->
-                    5
-
-                Sat ->
-                    6
-
-                Sun ->
-                    7
-    in
-    Date.firstOfWeekYear weekYear |> Date.add Weeks (weekNumber - 1) |> Date.add Days (weekdayNumber - 1)
+    Date.fromWeekDate weekYear weekNumber weekday
 
 
 extractErr : x -> Result x a -> x

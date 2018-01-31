@@ -1,6 +1,7 @@
 module Date.RataDie
     exposing
-        ( Interval(..)
+        ( Date
+        , Interval(..)
         , Month(..)
         , RataDie
         , Unit(..)
@@ -19,6 +20,9 @@ module Date.RataDie
         , fromWeekDate
         , month
         , monthNumber
+        , monthToNumber
+        , numberToMonth
+        , numberToWeekday
         , ordinalDay
         , quarter
         , range
@@ -31,6 +35,7 @@ module Date.RataDie
         , weekYear
         , weekday
         , weekdayNumber
+        , weekdayToNumber
         , year
         )
 
@@ -38,6 +43,10 @@ import Regex exposing (Regex)
 
 
 type alias RataDie =
+    Int
+
+
+type alias Date =
     Int
 
 
@@ -517,7 +526,7 @@ monthToNumber m =
 
 numberToMonth : Int -> Month
 numberToMonth mn =
-    case mn of
+    case max 1 mn of
         1 ->
             Jan
 
@@ -582,7 +591,7 @@ weekdayToNumber wd =
 
 numberToWeekday : Int -> Weekday
 numberToWeekday wdn =
-    case wdn of
+    case max 1 wdn of
         1 ->
             Mon
 

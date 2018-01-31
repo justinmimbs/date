@@ -1,12 +1,8 @@
 module Tests exposing (..)
 
-import Date.RataDie as Date exposing (Interval(..), Month(..), Unit(..), Weekday(..))
+import Date.RataDie as Date exposing (Date, Interval(..), Month(..), Unit(..), Weekday(..))
 import Expect exposing (Expectation)
 import Test exposing (Test, describe, test)
-
-
-type alias Date =
-    Int
 
 
 test_CalendarDate : Test
@@ -684,6 +680,38 @@ test_fromWeekDate =
                 , ( ( 2000, 0, Mon ), WeekDate 2000 1 Mon )
                 , ( ( 2000, 53, Mon ), WeekDate 2000 52 Mon )
                 , ( ( 2004, 54, Mon ), WeekDate 2004 53 Mon )
+                ]
+            )
+        ]
+
+
+test_numberToMonth : Test
+test_numberToMonth =
+    describe "numberToMonth"
+        [ describe "clamps numbers that are out of range"
+            (List.map
+                (\( n, month ) ->
+                    test (toString ( n, month )) <| \() -> n |> Date.numberToMonth |> Expect.equal month
+                )
+                [ ( -1, Jan )
+                , ( 0, Jan )
+                , ( 13, Dec )
+                ]
+            )
+        ]
+
+
+test_numberToWeekday : Test
+test_numberToWeekday =
+    describe "numberToWeekday"
+        [ describe "clamps numbers that are out of range"
+            (List.map
+                (\( n, weekday ) ->
+                    test (toString ( n, weekday )) <| \() -> n |> Date.numberToWeekday |> Expect.equal weekday
+                )
+                [ ( -1, Mon )
+                , ( 0, Mon )
+                , ( 8, Sun )
                 ]
             )
         ]

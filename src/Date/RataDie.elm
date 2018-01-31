@@ -1098,18 +1098,21 @@ ceiling interval date =
 range : Interval -> Int -> RataDie -> RataDie -> List RataDie
 range interval step start end =
     let
-        stepBack =
-            max 1 step |> negate
-
         ( n, unit ) =
             interval |> intervalToUnits
+
+        first =
+            start |> ceiling interval
     in
-    rangeHelp [] unit (n * stepBack) start (end |> add unit (n * stepBack) |> ceiling interval)
-
-
-rangeHelp : List RataDie -> Unit -> Int -> RataDie -> RataDie -> List RataDie
-rangeHelp result unit step start date =
-    if date < start then
-        result
+    if first < end then
+        rangeHelp unit (max 1 step * n) end [] first
     else
-        rangeHelp (date :: result) unit step start (date |> add unit step)
+        []
+
+
+rangeHelp : Unit -> Int -> RataDie -> List RataDie -> RataDie -> List RataDie
+rangeHelp unit step end revList date =
+    if date < end then
+        rangeHelp unit step end (date :: revList) (date |> add unit step)
+    else
+        List.reverse revList

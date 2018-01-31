@@ -472,6 +472,24 @@ test_range =
                 , CalendarDate 2000 Jan 5
                 ]
             ]
+        , describe "begins at interval nearest to start date"
+            [ toTest Day 10 (CalendarDate 2000 Jan 1) (CalendarDate 2000 Jan 30) <|
+                [ CalendarDate 2000 Jan 1
+                , CalendarDate 2000 Jan 11
+                , CalendarDate 2000 Jan 21
+                ]
+            , toTest Day 10 (CalendarDate 2000 Jan 1) (CalendarDate 2000 Jan 31) <|
+                [ CalendarDate 2000 Jan 1
+                , CalendarDate 2000 Jan 11
+                , CalendarDate 2000 Jan 21
+                ]
+            , toTest Day 10 (CalendarDate 2000 Jan 1) (CalendarDate 2000 Feb 1) <|
+                [ CalendarDate 2000 Jan 1
+                , CalendarDate 2000 Jan 11
+                , CalendarDate 2000 Jan 21
+                , CalendarDate 2000 Jan 31
+                ]
+            ]
         , test "returns a list of days as expected" <|
             \() ->
                 Date.range Day 1 (fromCalendarParts 2000 Jan 1) (fromCalendarParts 2001 Jan 1)

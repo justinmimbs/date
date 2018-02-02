@@ -1,6 +1,6 @@
 module Tests exposing (..)
 
-import Date.RataDie as Date exposing (Date, Interval(..), Month(..), Unit(..), Weekday(..))
+import Date.Basic as Date exposing (Date, Interval(..), Month(..), Unit(..), Weekday(..))
 import Expect exposing (Expectation)
 import Test exposing (Test, describe, test)
 
@@ -20,11 +20,21 @@ test_CalendarDate =
                             \() -> expectIsomorphism fromCalendarDate Date.toCalendarDate calendarDate
                     )
             )
-        , test "A list of contiguous CalendarDates is equivalent to a list of contiguous integers" <|
+        ]
+
+
+test_RataDie : Test
+test_RataDie =
+    describe "RataDie"
+        [ test "a list of contiguous CalendarDates, converted to RataDie, is equivalent to a list of contiguous integers" <|
             \() ->
                 List.range 1997 2025
-                    |> List.concatMap (calendarDatesInYear >> List.map fromCalendarDate)
-                    |> Expect.equal (List.range (Date.fromCalendarDate 1997 Jan 1) (Date.fromCalendarDate 2025 Dec 31))
+                    |> List.concatMap (calendarDatesInYear >> List.map (fromCalendarDate >> Date.toRataDie))
+                    |> Expect.equal
+                        (List.range
+                            (Date.fromCalendarDate 1997 Jan 1 |> Date.toRataDie)
+                            (Date.fromCalendarDate 2025 Dec 31 |> Date.toRataDie)
+                        )
         ]
 
 

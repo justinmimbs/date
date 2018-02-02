@@ -1,7 +1,6 @@
 module Date.RataDie
     exposing
-        ( Date
-        , Interval(..)
+        ( Interval(..)
         , Month(..)
         , RataDie
         , Unit(..)
@@ -43,10 +42,6 @@ import Regex exposing (Regex)
 
 
 type alias RataDie =
-    Int
-
-
-type alias Date =
     Int
 
 
@@ -740,7 +735,7 @@ toNameForm length =
 
 
 format : RataDie -> String -> String
-format date match =
+format rd match =
     let
         char =
             String.left 1 match
@@ -752,35 +747,35 @@ format date match =
         "y" ->
             case length of
                 2 ->
-                    date |> year |> toString |> String.padLeft 2 '0' |> String.right 2
+                    rd |> year |> toString |> String.padLeft 2 '0' |> String.right 2
 
                 _ ->
-                    date |> year |> toString |> String.padLeft length '0'
+                    rd |> year |> toString |> String.padLeft length '0'
 
         "Y" ->
             case length of
                 2 ->
-                    date |> weekYear |> toString |> String.padLeft 2 '0' |> String.right 2
+                    rd |> weekYear |> toString |> String.padLeft 2 '0' |> String.right 2
 
                 _ ->
-                    date |> weekYear |> toString |> String.padLeft length '0'
+                    rd |> weekYear |> toString |> String.padLeft length '0'
 
         "Q" ->
             case length of
                 1 ->
-                    date |> quarter |> toString
+                    rd |> quarter |> toString
 
                 2 ->
-                    date |> quarter |> toString
+                    rd |> quarter |> toString
 
                 3 ->
-                    date |> quarter |> toString |> (++) "Q"
+                    rd |> quarter |> toString |> (++) "Q"
 
                 4 ->
-                    date |> quarter |> withOrdinalSuffix
+                    rd |> quarter |> withOrdinalSuffix
 
                 5 ->
-                    date |> quarter |> toString
+                    rd |> quarter |> toString
 
                 _ ->
                     ""
@@ -788,19 +783,19 @@ format date match =
         "M" ->
             case length of
                 1 ->
-                    date |> monthNumber |> toString
+                    rd |> monthNumber |> toString
 
                 2 ->
-                    date |> monthNumber |> toString |> String.padLeft 2 '0'
+                    rd |> monthNumber |> toString |> String.padLeft 2 '0'
 
                 3 ->
-                    date |> month |> monthToName |> String.left 3
+                    rd |> month |> monthToName |> String.left 3
 
                 4 ->
-                    date |> month |> monthToName
+                    rd |> month |> monthToName
 
                 5 ->
-                    date |> month |> monthToName |> String.left 1
+                    rd |> month |> monthToName |> String.left 1
 
                 _ ->
                     ""
@@ -808,10 +803,10 @@ format date match =
         "w" ->
             case length of
                 1 ->
-                    date |> weekNumber |> toString
+                    rd |> weekNumber |> toString
 
                 2 ->
-                    date |> weekNumber |> toString |> String.padLeft 2 '0'
+                    rd |> weekNumber |> toString |> String.padLeft 2 '0'
 
                 _ ->
                     ""
@@ -819,14 +814,14 @@ format date match =
         "d" ->
             case length of
                 1 ->
-                    date |> day |> toString
+                    rd |> day |> toString
 
                 2 ->
-                    date |> day |> toString |> String.padLeft 2 '0'
+                    rd |> day |> toString |> String.padLeft 2 '0'
 
                 -- non-standard
                 3 ->
-                    date |> day |> withOrdinalSuffix
+                    rd |> day |> withOrdinalSuffix
 
                 _ ->
                     ""
@@ -834,13 +829,13 @@ format date match =
         "D" ->
             case length of
                 1 ->
-                    date |> ordinalDay |> toString
+                    rd |> ordinalDay |> toString
 
                 2 ->
-                    date |> ordinalDay |> toString |> String.padLeft 2 '0'
+                    rd |> ordinalDay |> toString |> String.padLeft 2 '0'
 
                 3 ->
-                    date |> ordinalDay |> toString |> String.padLeft 3 '0'
+                    rd |> ordinalDay |> toString |> String.padLeft 3 '0'
 
                 _ ->
                     ""
@@ -848,16 +843,16 @@ format date match =
         "E" ->
             case length |> toNameForm of
                 "abbreviated" ->
-                    date |> weekday |> weekdayToName |> String.left 3
+                    rd |> weekday |> weekdayToName |> String.left 3
 
                 "full" ->
-                    date |> weekday |> weekdayToName
+                    rd |> weekday |> weekdayToName
 
                 "narrow" ->
-                    date |> weekday |> weekdayToName |> String.left 1
+                    rd |> weekday |> weekdayToName |> String.left 1
 
                 "short" ->
-                    date |> weekday |> weekdayToName |> String.left 2
+                    rd |> weekday |> weekdayToName |> String.left 2
 
                 _ ->
                     ""
@@ -865,13 +860,13 @@ format date match =
         "e" ->
             case length of
                 1 ->
-                    date |> weekdayNumber |> toString
+                    rd |> weekdayNumber |> toString
 
                 2 ->
-                    date |> weekdayNumber |> toString
+                    rd |> weekdayNumber |> toString
 
                 _ ->
-                    format date (String.toUpper match)
+                    format rd (String.toUpper match)
 
         "'" ->
             if match == "''" then
@@ -884,8 +879,8 @@ format date match =
 
 
 toFormattedString : String -> RataDie -> String
-toFormattedString pattern date =
-    Regex.replace Regex.All patternMatches (.match >> format date) pattern
+toFormattedString pattern rd =
+    Regex.replace Regex.All patternMatches (.match >> format rd) pattern
 
 
 toIsoString : RataDie -> String
@@ -974,15 +969,15 @@ type Unit
 
 
 add : Unit -> Int -> RataDie -> RataDie
-add unit n date =
+add unit n rd =
     case unit of
         Years ->
-            date |> add Months (12 * n)
+            rd |> add Months (12 * n)
 
         Months ->
             let
                 { year, month, day } =
-                    date |> toCalendarDate
+                    rd |> toCalendarDate
 
                 wholeMonths =
                     12 * (year - 1) + monthToNumber month - 1 + n
@@ -996,20 +991,20 @@ add unit n date =
             daysBeforeYear y + daysBeforeMonth y m + min day (daysInMonth y m)
 
         Weeks ->
-            date + 7 * n
+            rd + 7 * n
 
         Days ->
-            date + n
+            rd + n
 
 
 {-| The number of whole months between date and 0001-01-01 plus fraction
 representing the current month. Only used for diffing months.
 -}
 toMonths : RataDie -> Float
-toMonths date =
+toMonths rd =
     let
         { year, month, day } =
-            date |> toCalendarDate
+            rd |> toCalendarDate
 
         wholeMonths =
             12 * (year - 1) + monthToNumber month - 1
@@ -1018,19 +1013,19 @@ toMonths date =
 
 
 diff : Unit -> RataDie -> RataDie -> Int
-diff unit date1 date2 =
+diff unit rd1 rd2 =
     case unit of
         Years ->
-            (toMonths date2 - toMonths date1 |> truncate) // 12
+            (toMonths rd2 - toMonths rd1 |> truncate) // 12
 
         Months ->
-            toMonths date2 - toMonths date1 |> truncate
+            toMonths rd2 - toMonths rd1 |> truncate
 
         Weeks ->
-            (date2 - date1) // 7
+            (rd2 - rd1) // 7
 
         Days ->
-            date2 - date1
+            rd2 - rd1
 
 
 
@@ -1053,56 +1048,56 @@ type Interval
 
 
 daysSincePreviousWeekday : Weekday -> RataDie -> Int
-daysSincePreviousWeekday wd date =
-    (weekdayNumber date + 7 - weekdayToNumber wd) % 7
+daysSincePreviousWeekday wd rd =
+    (weekdayNumber rd + 7 - weekdayToNumber wd) % 7
 
 
 floor : Interval -> RataDie -> RataDie
-floor interval date =
+floor interval rd =
     case interval of
         Year ->
-            firstOfYear (year date)
+            firstOfYear (year rd)
 
         Quarter ->
             let
                 { year, month } =
-                    date |> toCalendarDate
+                    rd |> toCalendarDate
             in
             firstOfMonth year (month |> monthToQuarter |> quarterToMonth)
 
         Month ->
             let
                 { year, month } =
-                    date |> toCalendarDate
+                    rd |> toCalendarDate
             in
             firstOfMonth year month
 
         Week ->
-            date - daysSincePreviousWeekday Mon date
+            rd - daysSincePreviousWeekday Mon rd
 
         Monday ->
-            date - daysSincePreviousWeekday Mon date
+            rd - daysSincePreviousWeekday Mon rd
 
         Tuesday ->
-            date - daysSincePreviousWeekday Tue date
+            rd - daysSincePreviousWeekday Tue rd
 
         Wednesday ->
-            date - daysSincePreviousWeekday Wed date
+            rd - daysSincePreviousWeekday Wed rd
 
         Thursday ->
-            date - daysSincePreviousWeekday Thu date
+            rd - daysSincePreviousWeekday Thu rd
 
         Friday ->
-            date - daysSincePreviousWeekday Fri date
+            rd - daysSincePreviousWeekday Fri rd
 
         Saturday ->
-            date - daysSincePreviousWeekday Sat date
+            rd - daysSincePreviousWeekday Sat rd
 
         Sunday ->
-            date - daysSincePreviousWeekday Sun date
+            rd - daysSincePreviousWeekday Sun rd
 
         Day ->
-            date
+            rd
 
 
 intervalToUnits : Interval -> ( Int, Unit )
@@ -1125,13 +1120,13 @@ intervalToUnits interval =
 
 
 ceiling : Interval -> RataDie -> RataDie
-ceiling interval date =
+ceiling interval rd =
     let
         floored =
-            date |> floor interval
+            rd |> floor interval
     in
-    if date == floored then
-        date
+    if rd == floored then
+        rd
     else
         let
             ( n, unit ) =
@@ -1156,8 +1151,8 @@ range interval step start end =
 
 
 rangeHelp : Unit -> Int -> RataDie -> List RataDie -> RataDie -> List RataDie
-rangeHelp unit step end revList date =
-    if date < end then
-        rangeHelp unit step end (date :: revList) (date |> add unit step)
+rangeHelp unit step end revList rd =
+    if rd < end then
+        rangeHelp unit step end (rd :: revList) (rd |> add unit step)
     else
         List.reverse revList

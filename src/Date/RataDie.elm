@@ -76,7 +76,7 @@ type Weekday
 
 isLeapYear : Int -> Bool
 isLeapYear y =
-    y % 4 == 0 && y % 100 /= 0 || y % 400 == 0
+    modBy 4 y == 0 && modBy 100 y /= 0 || modBy 400 y == 0
 
 
 daysBeforeYear : Int -> Int
@@ -93,7 +93,7 @@ daysBeforeYear y1 =
 
 weekdayNumber : RataDie -> Int
 weekdayNumber rd =
-    case rd % 7 of
+    case rd |> modBy 7 of
         0 ->
             7
 
@@ -174,7 +174,7 @@ year rd =
 -}
 divideInt : Int -> Int -> ( Int, Int )
 divideInt a b =
-    ( a // b, rem a b )
+    ( a // b, a |> remainderBy b )
 
 
 
@@ -189,7 +189,7 @@ fromOrdinalParts y od =
     then
         Ok <| daysBeforeYear y + od
     else
-        Err <| "Invalid ordinal date (" ++ toString y ++ ", " ++ toString od ++ ")"
+        Err <| "Invalid ordinal date (" ++ String.fromInt y ++ ", " ++ String.fromInt od ++ ")"
 
 
 fromCalendarParts : Int -> Int -> Int -> Result String RataDie
@@ -200,7 +200,7 @@ fromCalendarParts y mn d =
     then
         Ok <| daysBeforeYear y + daysBeforeMonth y (mn |> numberToMonth) + d
     else
-        Err <| "Invalid calendar date (" ++ toString y ++ ", " ++ toString mn ++ ", " ++ toString d ++ ")"
+        Err <| "Invalid calendar date (" ++ String.fromInt y ++ ", " ++ String.fromInt mn ++ ", " ++ String.fromInt d ++ ")"
 
 
 fromWeekParts : Int -> Int -> Int -> Result String RataDie
@@ -213,7 +213,7 @@ fromWeekParts wy wn wdn =
     then
         Ok <| daysBeforeWeekYear wy + (wn - 1) * 7 + wdn
     else
-        Err <| "Invalid week date (" ++ toString wy ++ ", " ++ toString wn ++ ", " ++ toString wdn ++ ")"
+        Err <| "Invalid week date (" ++ String.fromInt wy ++ ", " ++ String.fromInt wn ++ ", " ++ String.fromInt wdn ++ ")"
 
 
 isBetween : Int -> Int -> Int -> Bool
@@ -261,7 +261,7 @@ fromWeekDate wy wn wd =
 isoDateRegex : Regex
 isoDateRegex =
     let
-        year =
+        year_ =
             -- yyyy
             -- 1
             "(\\d{4})"
@@ -281,7 +281,9 @@ isoDateRegex =
             --     8
             "\\-?(\\d{3})"
     in
-    Regex.regex <| "^" ++ year ++ "(?:" ++ cal ++ "|" ++ week ++ "|" ++ ord ++ ")?$"
+    ("^" ++ year_ ++ "(?:" ++ cal ++ "|" ++ week ++ "|" ++ ord ++ ")?$")
+        |> Regex.fromString
+        |> Maybe.withDefault Regex.never
 
 
 fromIsoStringMatches : List (Maybe String) -> Result String RataDie
@@ -289,14 +291,14 @@ fromIsoStringMatches =
     let
         toInt : Maybe String -> Int
         toInt =
-            Maybe.andThen (String.toInt >> Result.toMaybe) >> Maybe.withDefault 1
+            Maybe.andThen String.toInt >> Maybe.withDefault 1
     in
     \matches ->
         case matches of
             [ Just yyyy, _, mn, d, _, wn, wdn, od ] ->
                 let
                     y =
-                        yyyy |> String.toInt |> Result.withDefault 1
+                        yyyy |> String.toInt |> Maybe.withDefault 1
                 in
                 case ( mn, wn ) of
                     ( Just _, Nothing ) ->
@@ -314,7 +316,7 @@ fromIsoStringMatches =
 
 fromIsoString : String -> Result String RataDie
 fromIsoString =
-    Regex.find (Regex.AtMost 1) isoDateRegex
+    Regex.find isoDateRegex
         >> List.head
         >> Result.fromMaybe "String is not in IS0 8601 date format"
         >> Result.andThen (.submatches >> fromIsoStringMatches)
@@ -672,14 +674,14 @@ ordinalSuffix n =
     let
         -- use 2-digit number
         nn =
-            n % 100
+            n |> modBy 100
     in
     case
         min
             (if nn < 20 then
                 nn
              else
-                nn % 10
+                nn |> modBy 10
             )
             4
     of
@@ -698,7 +700,7 @@ ordinalSuffix n =
 
 withOrdinalSuffix : Int -> String
 withOrdinalSuffix n =
-    toString n ++ ordinalSuffix n
+    String.fromInt n ++ ordinalSuffix n
 
 
 {-| Matches a series of pattern characters, or a single-quoted string (which
@@ -706,7 +708,12 @@ may contain '' inside, representing an escaped single-quote).
 -}
 patternMatches : Regex
 patternMatches =
-    Regex.regex "([yYQMwdDEe])\\1*|'(?:[^']|'')*?'(?!')"
+    Regex.fromString "([yYQMwdDEe])\\1*|'(?:[^']|'')*?'(?!')" |> Maybe.withDefault Regex.never
+
+
+escapedSingleQuote : Regex
+escapedSingleQuote =
+    Regex.fromString "''" |> Maybe.withDefault Regex.never
 
 
 toNameForm : Int -> String
@@ -747,35 +754,35 @@ format rd match =
         "y" ->
             case length of
                 2 ->
-                    rd |> year |> toString |> String.padLeft 2 '0' |> String.right 2
+                    rd |> year |> String.fromInt |> String.padLeft 2 '0' |> String.right 2
 
                 _ ->
-                    rd |> year |> toString |> String.padLeft length '0'
+                    rd |> year |> String.fromInt |> String.padLeft length '0'
 
         "Y" ->
             case length of
                 2 ->
-                    rd |> weekYear |> toString |> String.padLeft 2 '0' |> String.right 2
+                    rd |> weekYear |> String.fromInt |> String.padLeft 2 '0' |> String.right 2
 
                 _ ->
-                    rd |> weekYear |> toString |> String.padLeft length '0'
+                    rd |> weekYear |> String.fromInt |> String.padLeft length '0'
 
         "Q" ->
             case length of
                 1 ->
-                    rd |> quarter |> toString
+                    rd |> quarter |> String.fromInt
 
                 2 ->
-                    rd |> quarter |> toString
+                    rd |> quarter |> String.fromInt
 
                 3 ->
-                    rd |> quarter |> toString |> (++) "Q"
+                    rd |> quarter |> String.fromInt |> (++) "Q"
 
                 4 ->
                     rd |> quarter |> withOrdinalSuffix
 
                 5 ->
-                    rd |> quarter |> toString
+                    rd |> quarter |> String.fromInt
 
                 _ ->
                     ""
@@ -783,10 +790,10 @@ format rd match =
         "M" ->
             case length of
                 1 ->
-                    rd |> monthNumber |> toString
+                    rd |> monthNumber |> String.fromInt
 
                 2 ->
-                    rd |> monthNumber |> toString |> String.padLeft 2 '0'
+                    rd |> monthNumber |> String.fromInt |> String.padLeft 2 '0'
 
                 3 ->
                     rd |> month |> monthToName |> String.left 3
@@ -803,10 +810,10 @@ format rd match =
         "w" ->
             case length of
                 1 ->
-                    rd |> weekNumber |> toString
+                    rd |> weekNumber |> String.fromInt
 
                 2 ->
-                    rd |> weekNumber |> toString |> String.padLeft 2 '0'
+                    rd |> weekNumber |> String.fromInt |> String.padLeft 2 '0'
 
                 _ ->
                     ""
@@ -814,10 +821,10 @@ format rd match =
         "d" ->
             case length of
                 1 ->
-                    rd |> day |> toString
+                    rd |> day |> String.fromInt
 
                 2 ->
-                    rd |> day |> toString |> String.padLeft 2 '0'
+                    rd |> day |> String.fromInt |> String.padLeft 2 '0'
 
                 -- non-standard
                 3 ->
@@ -829,13 +836,13 @@ format rd match =
         "D" ->
             case length of
                 1 ->
-                    rd |> ordinalDay |> toString
+                    rd |> ordinalDay |> String.fromInt
 
                 2 ->
-                    rd |> ordinalDay |> toString |> String.padLeft 2 '0'
+                    rd |> ordinalDay |> String.fromInt |> String.padLeft 2 '0'
 
                 3 ->
-                    rd |> ordinalDay |> toString |> String.padLeft 3 '0'
+                    rd |> ordinalDay |> String.fromInt |> String.padLeft 3 '0'
 
                 _ ->
                     ""
@@ -860,10 +867,10 @@ format rd match =
         "e" ->
             case length of
                 1 ->
-                    rd |> weekdayNumber |> toString
+                    rd |> weekdayNumber |> String.fromInt
 
                 2 ->
-                    rd |> weekdayNumber |> toString
+                    rd |> weekdayNumber |> String.fromInt
 
                 _ ->
                     format rd (String.toUpper match)
@@ -872,7 +879,7 @@ format rd match =
             if match == "''" then
                 "'"
             else
-                String.slice 1 -1 match |> Regex.replace Regex.All (Regex.regex "''") (\_ -> "'")
+                String.slice 1 -1 match |> Regex.replace escapedSingleQuote (\_ -> "'")
 
         _ ->
             ""
@@ -880,7 +887,7 @@ format rd match =
 
 toFormattedString : String -> RataDie -> String
 toFormattedString pattern rd =
-    Regex.replace Regex.All patternMatches (.match >> format rd) pattern
+    Regex.replace patternMatches (.match >> format rd) pattern
 
 
 toIsoString : RataDie -> String
@@ -976,19 +983,19 @@ add unit n rd =
 
         Months ->
             let
-                { year, month, day } =
+                date =
                     rd |> toCalendarDate
 
                 wholeMonths =
-                    12 * (year - 1) + monthToNumber month - 1 + n
+                    12 * (date.year - 1) + monthToNumber date.month - 1 + n
 
                 y =
                     wholeMonths // 12 + 1
 
                 m =
-                    wholeMonths % 12 + 1 |> numberToMonth
+                    (wholeMonths |> modBy 12) + 1 |> numberToMonth
             in
-            daysBeforeYear y + daysBeforeMonth y m + min day (daysInMonth y m)
+            daysBeforeYear y + daysBeforeMonth y m + min date.day (daysInMonth y m)
 
         Weeks ->
             rd + 7 * n
@@ -1003,13 +1010,13 @@ representing the current month. Only used for diffing months.
 toMonths : RataDie -> Float
 toMonths rd =
     let
-        { year, month, day } =
+        date =
             rd |> toCalendarDate
 
         wholeMonths =
-            12 * (year - 1) + monthToNumber month - 1
+            12 * (date.year - 1) + monthToNumber date.month - 1
     in
-    toFloat wholeMonths + toFloat day / 100
+    toFloat wholeMonths + toFloat date.day / 100
 
 
 diff : Unit -> RataDie -> RataDie -> Int
@@ -1049,7 +1056,7 @@ type Interval
 
 daysSincePreviousWeekday : Weekday -> RataDie -> Int
 daysSincePreviousWeekday wd rd =
-    (weekdayNumber rd + 7 - weekdayToNumber wd) % 7
+    (weekdayNumber rd + 7 - weekdayToNumber wd) |> modBy 7
 
 
 floor : Interval -> RataDie -> RataDie
@@ -1060,17 +1067,17 @@ floor interval rd =
 
         Quarter ->
             let
-                { year, month } =
+                date =
                     rd |> toCalendarDate
             in
-            firstOfMonth year (month |> monthToQuarter |> quarterToMonth)
+            firstOfMonth date.year (date.month |> monthToQuarter |> quarterToMonth)
 
         Month ->
             let
-                { year, month } =
+                date =
                     rd |> toCalendarDate
             in
-            firstOfMonth year month
+            firstOfMonth date.year date.month
 
         Week ->
             rd - daysSincePreviousWeekday Mon rd

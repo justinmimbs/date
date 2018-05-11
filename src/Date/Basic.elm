@@ -401,12 +401,12 @@ range interval step (RD start) (RD end) =
 toCalendarDate : Date -> { year : Int, month : Month, day : Int }
 toCalendarDate (RD rd) =
     let
-        { year, month, day } =
+        date =
             RataDie.toCalendarDate rd
     in
-    { year = year
-    , month = importMonth month
-    , day = day
+    { year = date.year
+    , month = importMonth date.month
+    , day = date.day
     }
 
 
@@ -428,12 +428,12 @@ toOrdinalDate (RD rd) =
 toWeekDate : Date -> { weekYear : Int, weekNumber : Int, weekday : Weekday }
 toWeekDate (RD rd) =
     let
-        { weekYear, weekNumber, weekday } =
+        date =
             RataDie.toWeekDate rd
     in
-    { weekYear = weekYear
-    , weekNumber = weekNumber
-    , weekday = importWeekday weekday
+    { weekYear = date.weekYear
+    , weekNumber = date.weekNumber
+    , weekday = importWeekday date.weekday
     }
 
 

@@ -1,8 +1,115 @@
 module Tests exposing (..)
 
-import Date.Basic as Date exposing (Date, Interval(..), Month(..), Unit(..), Weekday(..))
+import Date as Date exposing (Date, Interval(..), Month(..), Unit(..), Weekday(..))
+
+
+{-| temporary
 import Expect exposing (Expectation)
 import Test exposing (Test, describe, test)
+-}
+
+
+
+-------------------------------------------------------------------------------
+-- temporary shim for elm-test
+
+
+type Test
+    = One String (() -> Expectation)
+    | Many String (List Test)
+
+
+type Expectation
+    = Pass
+    | NotEqual ( String, String )
+
+
+equal : a -> a -> Expectation
+equal x y =
+    if x == y then
+        Pass
+    else
+        NotEqual ( Debug.toString x, Debug.toString y )
+
+
+test : String -> (() -> Expectation) -> Test
+test =
+    One
+
+
+describe : String -> List Test -> Test
+describe =
+    Many
+
+
+{-| test -> ( count of tests run, [ ( failing test context, not-equal pair ) ] )
+-}
+run : Test -> ( Int, List ( List String, ( String, String ) ) )
+run t =
+    case t of
+        One desc thunk ->
+            ( 1
+            , case thunk () of
+                Pass ->
+                    []
+
+                NotEqual pair ->
+                    [ ( [ desc ], pair ) ]
+            )
+
+        Many desc tests ->
+            List.foldl
+                (\t1 result ->
+                    run t1
+                        |> Tuple.mapSecond (List.map (Tuple.mapFirst ((::) desc)))
+                        |> append result
+                )
+                empty
+                tests
+
+
+empty : ( Int, List a )
+empty =
+    ( 0, [] )
+
+
+append : ( Int, List a ) -> ( Int, List a ) -> ( Int, List a )
+append ( n2, list2 ) ( n1, list1 ) =
+    ( n1 + n2, list1 ++ list2 )
+
+
+
+-------------------------------------------------------------------------------
+
+
+{-| temporary collection of all tests
+
+    run suite
+
+-}
+suite : Test
+suite =
+    describe "Date"
+        [ test_CalendarDate
+        , test_RataDie
+        , test_WeekDate
+        , test_toFormattedString
+        , test_add
+        , test_diff
+        , test_floor
+        , test_ceiling
+        , test_range
+        , test_fromIsoString
+        , test_fromOrdinalDate
+        , test_fromCalendarDate
+        , test_fromWeekDate
+        , test_numberToMonth
+        , test_numberToWeekday
+        ]
+
+
+
+-------------------------------------------------------------------------------
 
 
 test_CalendarDate : Test
@@ -16,7 +123,7 @@ test_CalendarDate =
                 |> List.concatMap calendarDatesInYear
                 |> List.map
                     (\calendarDate ->
-                        test (toString calendarDate) <|
+                        test (Debug.toString calendarDate) <|
                             \() -> expectIsomorphism fromCalendarDate Date.toCalendarDate calendarDate
                     )
             )
@@ -30,7 +137,7 @@ test_RataDie =
             \() ->
                 List.range 1997 2025
                     |> List.concatMap (calendarDatesInYear >> List.map (fromCalendarDate >> Date.toRataDie))
-                    |> Expect.equal
+                    |> equal
                         (List.range
                             (Date.fromCalendarDate 1997 Jan 1 |> Date.toRataDie)
                             (Date.fromCalendarDate 2025 Dec 31 |> Date.toRataDie)
@@ -46,7 +153,7 @@ test_WeekDate =
                 |> List.concatMap calendarDatesInYear
                 |> List.map
                     (\calendarDate ->
-                        test (toString calendarDate) <|
+                        test (Debug.toString calendarDate) <|
                             \() -> expectIsomorphism Date.toWeekDate fromWeekDate (fromCalendarDate calendarDate)
                     )
             )
@@ -70,8 +177,8 @@ test_WeekDate =
              ]
                 |> List.map
                     (\( calendarDate, weekDate ) ->
-                        test (toString calendarDate) <|
-                            \() -> fromCalendarDate calendarDate |> Date.toWeekDate |> Expect.equal weekDate
+                        test (Debug.toString calendarDate) <|
+                            \() -> fromCalendarDate calendarDate |> Date.toWeekDate |> equal weekDate
                     )
             )
         ]
@@ -82,8 +189,8 @@ test_toFormattedString =
     let
         testDateToFormattedString : Date -> ( String, String ) -> Test
         testDateToFormattedString date ( pattern, expected ) =
-            test ("\"" ++ pattern ++ "\" " ++ toString date) <|
-                \() -> date |> Date.toFormattedString pattern |> Expect.equal expected
+            test ("\"" ++ pattern ++ "\" " ++ Debug.toString date) <|
+                \() -> date |> Date.toFormattedString pattern |> equal expected
     in
     describe "toFormattedString"
         [ describe "replaces supported character patterns" <|
@@ -204,9 +311,9 @@ test_add =
     let
         toTest : ( Int, Month, Int ) -> Int -> Unit -> ( Int, Month, Int ) -> Test
         toTest ( y1, m1, d1 ) n unit (( y2, m2, d2 ) as expected) =
-            test (toString ( y1, m1, d1 ) ++ " + " ++ toString n ++ " " ++ toString unit ++ " => " ++ toString expected) <|
+            test (Debug.toString ( y1, m1, d1 ) ++ " + " ++ Debug.toString n ++ " " ++ Debug.toString unit ++ " => " ++ Debug.toString expected) <|
                 \() ->
-                    Date.fromCalendarDate y1 m1 d1 |> Date.add unit n |> Expect.equal (Date.fromCalendarDate y2 m2 d2)
+                    Date.fromCalendarDate y1 m1 d1 |> Date.add unit n |> equal (Date.fromCalendarDate y2 m2 d2)
     in
     describe "add"
         [ describe "add 0 x == x" <|
@@ -251,9 +358,9 @@ test_diff =
     let
         toTest : ( Int, Month, Int ) -> ( Int, Month, Int ) -> Int -> Unit -> Test
         toTest ( y1, m1, d1 ) ( y2, m2, d2 ) expected unit =
-            test (toString ( y2, m2, d2 ) ++ " - " ++ toString ( y1, m1, d1 ) ++ " => " ++ toString expected ++ " " ++ toString unit) <|
+            test (Debug.toString ( y2, m2, d2 ) ++ " - " ++ Debug.toString ( y1, m1, d1 ) ++ " => " ++ Debug.toString expected ++ " " ++ Debug.toString unit) <|
                 \() ->
-                    Date.diff unit (Date.fromCalendarDate y1 m1 d1) (Date.fromCalendarDate y2 m2 d2) |> Expect.equal expected
+                    Date.diff unit (Date.fromCalendarDate y1 m1 d1) (Date.fromCalendarDate y2 m2 d2) |> equal expected
     in
     describe "diff"
         [ describe "diff x x == 0" <|
@@ -266,7 +373,7 @@ test_diff =
                     ( Date.fromCalendarDate 2000 Jan 1, Date.fromCalendarDate 2017 Sep 28 )
             in
             List.map
-                (\unit -> test (toString unit) <| \() -> Date.diff unit x y |> Expect.equal (negate (Date.diff unit y x)))
+                (\unit -> test (Debug.toString unit) <| \() -> Date.diff unit x y |> equal (negate (Date.diff unit y x)))
                 [ Years, Months, Weeks, Days ]
         , describe "`diff earlier later` results in positive numbers"
             [ toTest ( 2000, Jan, 1 ) ( 2002, Jan, 1 ) 2 Years
@@ -306,9 +413,9 @@ test_floor =
     let
         toTest : Interval -> ( Int, Month, Int ) -> ( Int, Month, Int ) -> Test
         toTest interval ( y1, m1, d1 ) (( y2, m2, d2 ) as expected) =
-            describe (toString interval ++ " " ++ toString ( y1, m1, d1 ))
-                [ test ("=> " ++ toString expected) <|
-                    \() -> Date.fromCalendarDate y1 m1 d1 |> Date.floor interval |> Expect.equal (Date.fromCalendarDate y2 m2 d2)
+            describe (Debug.toString interval ++ " " ++ Debug.toString ( y1, m1, d1 ))
+                [ test ("=> " ++ Debug.toString expected) <|
+                    \() -> Date.fromCalendarDate y1 m1 d1 |> Date.floor interval |> equal (Date.fromCalendarDate y2 m2 d2)
                 , test "is idempotent" <|
                     \() -> Date.fromCalendarDate y1 m1 d1 |> expectIdempotence (Date.floor interval)
                 ]
@@ -358,9 +465,9 @@ test_ceiling =
     let
         toTest : Interval -> ( Int, Month, Int ) -> ( Int, Month, Int ) -> Test
         toTest interval ( y1, m1, d1 ) (( y2, m2, d2 ) as expected) =
-            describe (toString interval ++ " " ++ toString ( y1, m1, d1 ))
-                [ test ("=> " ++ toString expected) <|
-                    \() -> Date.fromCalendarDate y1 m1 d1 |> Date.ceiling interval |> Expect.equal (Date.fromCalendarDate y2 m2 d2)
+            describe (Debug.toString interval ++ " " ++ Debug.toString ( y1, m1, d1 ))
+                [ test ("=> " ++ Debug.toString expected) <|
+                    \() -> Date.fromCalendarDate y1 m1 d1 |> Date.ceiling interval |> equal (Date.fromCalendarDate y2 m2 d2)
                 , test "is idempotent" <|
                     \() -> Date.fromCalendarDate y1 m1 d1 |> expectIdempotence (Date.ceiling interval)
                 ]
@@ -410,10 +517,10 @@ test_range =
     let
         toTest : Interval -> Int -> CalendarDate -> CalendarDate -> List CalendarDate -> Test
         toTest interval step start end expected =
-            test ([ toString interval, toString step, toString start, toString end ] |> String.join " ") <|
+            test ([ Debug.toString interval, Debug.toString step, Debug.toString start, Debug.toString end ] |> String.join " ") <|
                 \() ->
                     Date.range interval step (fromCalendarDate start) (fromCalendarDate end)
-                        |> Expect.equal (expected |> List.map fromCalendarDate)
+                        |> equal (expected |> List.map fromCalendarDate)
     in
     describe "range"
         [ describe "returns a list of dates at rounded intervals which may include start and must exclude end"
@@ -499,11 +606,11 @@ test_range =
         , test "returns a list of days as expected" <|
             \() ->
                 Date.range Day 1 (Date.fromCalendarDate 2000 Jan 1) (Date.fromCalendarDate 2001 Jan 1)
-                    |> Expect.equal (calendarDatesInYear 2000 |> List.map fromCalendarDate)
+                    |> equal (calendarDatesInYear 2000 |> List.map fromCalendarDate)
         , test "can return the empty list" <|
             \() ->
                 Date.range Day 1 (Date.fromCalendarDate 2000 Jan 1) (Date.fromCalendarDate 2000 Jan 1)
-                    |> Expect.equal []
+                    |> equal []
         , describe "can return a large list (tail recursion)"
             [ let
                 start =
@@ -515,8 +622,8 @@ test_range =
                 expectedLength =
                     Date.diff Days start end
               in
-              test ("length: " ++ toString expectedLength) <|
-                \() -> Date.range Day 1 start end |> List.length |> Expect.equal expectedLength
+              test ("length: " ++ Debug.toString expectedLength) <|
+                \() -> Date.range Day 1 start end |> List.length |> equal expectedLength
             ]
         ]
 
@@ -526,8 +633,8 @@ test_fromIsoString =
     let
         toTest : ( String, ( Int, Month, Int ) ) -> Test
         toTest ( string, ( y, m, d ) as expected ) =
-            test (string ++ " => " ++ toString expected) <|
-                \() -> Date.fromIsoString string |> Expect.equal (Ok (Date.fromCalendarDate y m d))
+            test (string ++ " => " ++ Debug.toString expected) <|
+                \() -> Date.fromIsoString string |> equal (Ok (Date.fromCalendarDate y m d))
     in
     describe "fromIsoString"
         [ describe "converts ISO 8601 date strings in basic format" <|
@@ -549,7 +656,7 @@ test_fromIsoString =
                 ]
         , describe "returns Err for malformed date strings" <|
             List.map
-                (\s -> test s <| \() -> Date.fromIsoString s |> Expect.equal (Err "String is not in IS0 8601 date format"))
+                (\s -> test s <| \() -> Date.fromIsoString s |> equal (Err "String is not in IS0 8601 date format"))
                 [ "200812-31"
                 , "2008-1231"
                 , "2009W01-4"
@@ -560,7 +667,7 @@ test_fromIsoString =
                 ]
         , describe "returns Err for invalid dates" <|
             List.map
-                (\s -> test s <| \() -> Date.fromIsoString s |> extractErr "" |> String.startsWith "Invalid" |> Expect.true "")
+                (\s -> test s <| \() -> Date.fromIsoString s |> extractErr "" |> String.startsWith "Invalid" |> equal True)
                 [ "2008-00"
                 , "2008-13"
                 , "2008-00-01"
@@ -585,7 +692,7 @@ test_fromIsoString =
                 |> List.concatMap calendarDatesInYear
                 |> List.map
                     (\calendarDate ->
-                        test (toString calendarDate) <|
+                        test (Debug.toString calendarDate) <|
                             \() ->
                                 expectIsomorphism
                                     (Result.map Date.toIsoString)
@@ -600,7 +707,7 @@ test_fromIsoString =
                 |> List.concatMap calendarDatesInYear
                 |> List.map
                     (\calendarDate ->
-                        test (toString calendarDate) <|
+                        test (Debug.toString calendarDate) <|
                             \() ->
                                 expectIsomorphism
                                     (Result.map (Date.toFormattedString "yyyy-DDD"))
@@ -615,7 +722,7 @@ test_fromIsoString =
                 |> List.concatMap calendarDatesInYear
                 |> List.map
                     (\calendarDate ->
-                        test (toString calendarDate) <|
+                        test (Debug.toString calendarDate) <|
                             \() ->
                                 expectIsomorphism
                                     (Result.map (Date.toFormattedString "YYYY-'W'ww-e"))
@@ -632,9 +739,9 @@ test_fromOrdinalDate =
         [ describe "clamps days that are out of range for the given year"
             (List.map
                 (\( ( y, od ), expected ) ->
-                    test (toString ( y, od ) ++ " " ++ toString expected) <|
+                    test (Debug.toString ( y, od ) ++ " " ++ Debug.toString expected) <|
                         \() ->
-                            Date.fromOrdinalDate y od |> Date.toOrdinalDate |> Expect.equal expected
+                            Date.fromOrdinalDate y od |> Date.toOrdinalDate |> equal expected
                 )
                 [ ( ( 2000, -1 ), OrdinalDate 2000 1 )
                 , ( ( 2000, 0 ), OrdinalDate 2000 1 )
@@ -651,9 +758,9 @@ test_fromCalendarDate =
         [ describe "clamps days that are out of range for the given year and month"
             (List.map
                 (\( ( y, m, d ), expected ) ->
-                    test (toString ( y, m, d ) ++ " " ++ toString expected) <|
+                    test (Debug.toString ( y, m, d ) ++ " " ++ Debug.toString expected) <|
                         \() ->
-                            Date.fromCalendarDate y m d |> Date.toCalendarDate |> Expect.equal expected
+                            Date.fromCalendarDate y m d |> Date.toCalendarDate |> equal expected
                 )
                 [ ( ( 2000, Jan, -1 ), CalendarDate 2000 Jan 1 )
                 , ( ( 2000, Jan, 0 ), CalendarDate 2000 Jan 1 )
@@ -682,9 +789,9 @@ test_fromWeekDate =
         [ describe "clamps weeks that are out of range for the given week-year"
             (List.map
                 (\( ( wy, wn, wd ), expected ) ->
-                    test (toString ( wy, wn, wd ) ++ " " ++ toString expected) <|
+                    test (Debug.toString ( wy, wn, wd ) ++ " " ++ Debug.toString expected) <|
                         \() ->
-                            Date.fromWeekDate wy wn wd |> Date.toWeekDate |> Expect.equal expected
+                            Date.fromWeekDate wy wn wd |> Date.toWeekDate |> equal expected
                 )
                 [ ( ( 2000, -1, Mon ), WeekDate 2000 1 Mon )
                 , ( ( 2000, 0, Mon ), WeekDate 2000 1 Mon )
@@ -701,7 +808,7 @@ test_numberToMonth =
         [ describe "clamps numbers that are out of range"
             (List.map
                 (\( n, month ) ->
-                    test (toString ( n, month )) <| \() -> n |> Date.numberToMonth |> Expect.equal month
+                    test (Debug.toString ( n, month )) <| \() -> n |> Date.numberToMonth |> equal month
                 )
                 [ ( -1, Jan )
                 , ( 0, Jan )
@@ -717,7 +824,7 @@ test_numberToWeekday =
         [ describe "clamps numbers that are out of range"
             (List.map
                 (\( n, weekday ) ->
-                    test (toString ( n, weekday )) <| \() -> n |> Date.numberToWeekday |> Expect.equal weekday
+                    test (Debug.toString ( n, weekday )) <| \() -> n |> Date.numberToWeekday |> equal weekday
                 )
                 [ ( -1, Mon )
                 , ( 0, Mon )
@@ -735,7 +842,7 @@ test_numberToWeekday =
            \() ->
                List.range 1970 2040
                    |> List.filter Date.is53WeekYear
-                   |> Expect.equal [ 1970, 1976, 1981, 1987, 1992, 1998, 2004, 2009, 2015, 2020, 2026, 2032, 2037 ]
+                   |> equal [ 1970, 1976, 1981, 1987, 1992, 1998, 2004, 2009, 2015, 2020, 2026, 2032, 2037 ]
 -}
 -- helpers
 
@@ -762,7 +869,7 @@ calendarDatesInYear y =
 
 isLeapYear : Int -> Bool
 isLeapYear y =
-    y % 4 == 0 && y % 100 /= 0 || y % 400 == 0
+    modBy 4 y == 0 && modBy 100 y /= 0 || modBy 400 y == 0
 
 
 daysInMonth : Int -> Month -> Int
@@ -833,9 +940,9 @@ extractErr default result =
 
 expectIsomorphism : (x -> y) -> (y -> x) -> x -> Expectation
 expectIsomorphism xToY yToX x =
-    x |> xToY |> yToX |> Expect.equal x
+    x |> xToY |> yToX |> equal x
 
 
 expectIdempotence : (x -> x) -> x -> Expectation
 expectIdempotence f x =
-    f (f x) |> Expect.equal (f x)
+    f (f x) |> equal (f x)

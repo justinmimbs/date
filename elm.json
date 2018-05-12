@@ -1,10 +1,11 @@
 {
     "type": "package",
-    "name": "justinmimbs/date-basic",
+    "name": "justinmimbs/date",
     "summary": "Work with dates without times or zones",
     "license": "BSD-3-Clause",
     "version": "1.0.0",
     "exposed-modules": [
+        "Date",
         "Date.RataDie"
     ],
     "elm-version": "0.19.0 <= v < 0.20.0",

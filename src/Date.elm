@@ -1,4 +1,4 @@
-module Date.Basic
+module Date
     exposing
         ( Date
         , Interval(..)

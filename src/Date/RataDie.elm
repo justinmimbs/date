@@ -9,9 +9,6 @@ module Date.RataDie
         , ceiling
         , day
         , diff
-        , firstOfMonth
-        , firstOfWeekYear
-        , firstOfYear
         , floor
         , fromCalendarDate
         , fromIsoString
@@ -38,13 +35,75 @@ module Date.RataDie
         , year
         )
 
+{-| [Rata Die](https://en.wikipedia.org/wiki/Rata_Die) is a system for
+assigning numbers to calendar days, using a base date of _1 January 0001_.
+
+This module exposes the same functions as the `Date` module, but it uses raw
+`Int` values as date representations.
+
+This may be useful if you need dates as comparables. Otherwise, the `Date`
+module offers an opaque type for better type-safety.
+
+@docs RataDie, Month, Weekday
+
+
+## Constructors
+
+@docs fromCalendarDate, fromOrdinalDate, fromWeekDate
+
+
+## Formatting
+
+@docs toFormattedString
+
+
+## ISO 8601
+
+@docs fromIsoString, toIsoString
+
+
+## Arithmetic
+
+@docs Unit, add, diff
+
+
+## Rounding
+
+@docs Interval, ceiling, floor
+
+
+## Lists
+
+@docs range
+
+
+## Extractions
+
+@docs year, quarter, month, monthNumber, ordinalDay, day, weekYear, weekNumber, weekday, weekdayNumber
+
+
+## Records
+
+Convenience functions for converting dates to records.
+
+@docs toCalendarDate, toOrdinalDate, toWeekDate
+
+
+## Month and Weekday helpers
+
+@docs monthToNumber, numberToMonth, weekdayToNumber, numberToWeekday
+
+-}
+
 import Regex exposing (Regex)
 
 
+{-| -}
 type alias RataDie =
     Int
 
 
+{-| -}
 type Month
     = Jan
     | Feb
@@ -60,6 +119,7 @@ type Month
     | Dec
 
 
+{-| -}
 type Weekday
     = Mon
     | Tue
@@ -91,6 +151,8 @@ daysBeforeYear y1 =
     365 * y + leapYears
 
 
+{-| Numbers 1–7 represent Monday–Sunday.
+-}
 weekdayNumber : RataDie -> Int
 weekdayNumber rd =
     case rd |> modBy 7 of
@@ -143,6 +205,7 @@ firstOfWeekYear wy =
 -- extract
 
 
+{-| -}
 year : RataDie -> Int
 year rd =
     let
@@ -225,6 +288,12 @@ isBetween a b x =
 -- constructors, clamping
 
 
+{-| Create a date from a year and day of the year; out-of-range day values
+will be clamped.
+
+    fromOrdinalDate 2018 314
+
+-}
 fromOrdinalDate : Int -> Int -> RataDie
 fromOrdinalDate y od =
     let
@@ -237,11 +306,23 @@ fromOrdinalDate y od =
     daysBeforeYear y + (od |> clamp 1 daysInY)
 
 
+{-| Create a date from a year, month, and day of the month; out-of-range day
+values will be clamped.
+
+    fromCalendarDate 2018 Sep 26
+
+-}
 fromCalendarDate : Int -> Month -> Int -> RataDie
 fromCalendarDate y m d =
     daysBeforeYear y + daysBeforeMonth y m + (d |> clamp 1 (daysInMonth y m))
 
 
+{-| Create a date from a week-numbering year, week number, and weekday;
+out-of-range week values will be clamped.
+
+    fromWeekDate 2018 26 Wed
+
+-}
 fromWeekDate : Int -> Int -> Weekday -> RataDie
 fromWeekDate wy wn wd =
     let
@@ -314,6 +395,22 @@ fromIsoStringMatches =
                 Err "Unexpected results from isoDateRegex"
 
 
+{-| Attempt to create a date from a string in
+[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format. Calendar dates,
+week dates, and ordinal dates are all supported in extended and basic
+format.
+
+    fromIsoString "2018-09-26"
+    fromIsoString "2018-W26-3"
+    fromIsoString "2018-314"
+
+The string must represent a valid date; unlike `fromCalendarDate` and
+friends, any out-of-range values will fail to produce a date.
+
+    fromIsoString "2018-02-29"
+    -- Err "Invalid calendar date"
+
+-}
 fromIsoString : String -> Result String RataDie
 fromIsoString =
     Regex.find isoDateRegex
@@ -326,6 +423,7 @@ fromIsoString =
 -- to
 
 
+{-| -}
 toOrdinalDate : RataDie -> { year : Int, ordinalDay : Int }
 toOrdinalDate rd =
     let
@@ -337,6 +435,7 @@ toOrdinalDate rd =
     }
 
 
+{-| -}
 toCalendarDate : RataDie -> { year : Int, month : Month, day : Int }
 toCalendarDate rd =
     let
@@ -364,6 +463,7 @@ toCalendarDateHelp y m d =
         }
 
 
+{-| -}
 toWeekDate : RataDie -> { weekYear : Int, weekNumber : Int, weekday : Weekday }
 toWeekDate rd =
     let
@@ -481,6 +581,7 @@ daysBeforeMonth y m =
 -- conversions
 
 
+{-| -}
 monthToNumber : Month -> Int
 monthToNumber m =
     case m of
@@ -521,6 +622,7 @@ monthToNumber m =
             12
 
 
+{-| -}
 numberToMonth : Int -> Month
 numberToMonth mn =
     case max 1 mn of
@@ -561,6 +663,7 @@ numberToMonth mn =
             Dec
 
 
+{-| -}
 weekdayToNumber : Weekday -> Int
 weekdayToNumber wd =
     case wd of
@@ -586,6 +689,7 @@ weekdayToNumber wd =
             7
 
 
+{-| -}
 numberToWeekday : Int -> Weekday
 numberToWeekday wdn =
     case max 1 wdn of
@@ -625,41 +729,53 @@ quarterToMonth q =
 -- extractions (convenience)
 
 
+{-| Extracts the day of the year.
+-}
 ordinalDay : RataDie -> Int
 ordinalDay =
     toOrdinalDate >> .ordinalDay
 
 
+{-| -}
 month : RataDie -> Month
 month =
     toCalendarDate >> .month
 
 
+{-| -}
 monthNumber : RataDie -> Int
 monthNumber =
     month >> monthToNumber
 
 
+{-| -}
 quarter : RataDie -> Int
 quarter =
     month >> monthToQuarter
 
 
+{-| Extracts the day of the month.
+-}
 day : RataDie -> Int
 day =
     toCalendarDate >> .day
 
 
+{-| Extracts the week-numbering year; this is not always the same as the
+calendar year.
+-}
 weekYear : RataDie -> Int
 weekYear =
     toWeekDate >> .weekYear
 
 
+{-| -}
 weekNumber : RataDie -> Int
 weekNumber =
     toWeekDate >> .weekNumber
 
 
+{-| -}
 weekday : RataDie -> Weekday
 weekday =
     weekdayNumber >> numberToWeekday
@@ -885,11 +1001,54 @@ format rd match =
             ""
 
 
+{-| Convert a date to a string using a pattern as a template.
+
+    fromCalendarDate 2007 Mar 15
+        |> toFormattedString "EEEE, MMMM d, y"
+    -- "Thursday, March 15, 2007"
+
+Each alphabetic character in the pattern represents date or time information;
+the number of times a character is repeated specifies the form of the name to
+use (e.g. "Tue", "Tuesday") or the padding of numbers (e.g. "1", "01").
+Formatting characters are escaped within single-quotes; a single-quote is
+escaped as a sequence of two single-quotes, whether appearing inside or outside
+an escaped sequence.
+
+Patterns are based on Date Format Patterns in [Unicode Technical
+Standard #35](http://www.unicode.org/reports/tr35/tr35-43/tr35-dates.html#Date_Format_Patterns).
+Only the following subset of formatting characters are available:
+
+    "y" -- year
+    "Y" -- week-numbering year
+    "Q" -- quarter
+    "M" -- month
+    "w" -- week number
+    "d" -- day
+    "D" -- ordinal day
+    "E" -- day of week
+    "e" -- weekday number / day of week
+
+The non-standard pattern field "ddd" is available to indicate the day of the
+month with an ordinal suffix (e.g. "1st", "15th"), as the current standard does
+not include such a field.
+
+    fromCalendarDate 2007 Mar 15
+        |> toFormattedString "MMMM ddd, y"
+    -- "March 15th, 2007"
+
+-}
 toFormattedString : String -> RataDie -> String
 toFormattedString pattern rd =
     Regex.replace patternMatches (.match >> format rd) pattern
 
 
+{-| Convenience function for formatting a date in ISO 8601 extended format.
+
+    fromCalendarDate 2007 Mar 15
+        |> toIsoString
+    -- "2007-03-15"
+
+-}
 toIsoString : RataDie -> String
 toIsoString =
     toFormattedString "yyyy-MM-dd"
@@ -968,6 +1127,7 @@ weekdayToName wd =
 -- arithmetic
 
 
+{-| -}
 type Unit
     = Years
     | Months
@@ -975,6 +1135,20 @@ type Unit
     | Days
 
 
+{-| Move a date by some number of units.
+
+    fromCalendarDate 2018 Sep 26
+        |> add Weeks -2
+    -- fromCalendarDate 2018 Sep 12
+
+When adding `Years` or `Months`, day values are clamped to the end of the
+month if necessary.
+
+    fromCalendarDate 2000 Jan 31
+        |> add Months 1
+    -- fromCalendarDate 2000 Feb 29
+
+-}
 add : Unit -> Int -> RataDie -> RataDie
 add unit n rd =
     case unit of
@@ -1019,6 +1193,14 @@ toMonths rd =
     toFloat wholeMonths + toFloat date.day / 100
 
 
+{-| Find the difference, as a number of some units, between two dates.
+
+    diff Months
+        (fromCalendarDate 2007 Mar 15)
+        (fromCalendarDate 2007 Sep 1)
+    -- 5
+
+-}
 diff : Unit -> RataDie -> RataDie -> Int
 diff unit rd1 rd2 =
     case unit of
@@ -1039,6 +1221,7 @@ diff unit rd1 rd2 =
 -- intervals
 
 
+{-| -}
 type Interval
     = Year
     | Quarter
@@ -1059,6 +1242,14 @@ daysSincePreviousWeekday wd rd =
     (weekdayNumber rd + 7 - weekdayToNumber wd) |> modBy 7
 
 
+{-| Round down a date to the beginning of the closest interval. The resulting
+date will be less than or equal to the one provided.
+
+    fromCalendarDate 2018 May 11
+        |> floor Tuesday
+    -- fromCalendarDate 2018 May 8
+
+-}
 floor : Interval -> RataDie -> RataDie
 floor interval rd =
     case interval of
@@ -1126,6 +1317,14 @@ intervalToUnits interval =
             ( 1, Weeks )
 
 
+{-| Round up a date to the beginning of the closest interval. The resulting
+date will be greater than or equal to the one provided.
+
+    fromCalendarDate 2018 May 11
+        |> ceiling Tuesday
+    -- fromCalendarDate 2018 May 15
+
+-}
 ceiling : Interval -> RataDie -> RataDie
 ceiling interval rd =
     let
@@ -1142,6 +1341,20 @@ ceiling interval rd =
         floored |> add unit n
 
 
+{-| Create a list of dates, at rounded intervals, increasing by a step value,
+between two dates. The list will start on or after the first date, and end
+before the second date.
+
+    range Day 2
+        (fromCalendarDate 2018 May 8)
+        (fromCalendarDate 2018 May 14)
+
+    -- [ fromCalendarDate 2018 May 8
+    -- , fromCalendarDate 2018 May 10
+    -- , fromCalendarDate 2018 May 12
+    -- ]
+
+-}
 range : Interval -> Int -> RataDie -> RataDie -> List RataDie
 range interval step start end =
     let

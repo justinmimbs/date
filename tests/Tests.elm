@@ -244,11 +244,15 @@ test_toFormattedString =
                 , ( "eeeeee", "Tu" )
                 , ( "eeeeeee", "" )
                 ]
-        , describe "ignores unsupported character patterns" <|
+        , describe "removes unsupported pattern characters" <|
             List.map
                 (testDateToFormattedString (Date.fromCalendarDate 2008 Dec 31))
-                [ ( "ABCFGHIJKLNOPRSTUVWXZabcfghijklmnopqrstuvxz", "ABCFGHIJKLNOPRSTUVWXZabcfghijklmnopqrstuvxz" )
-                , ( "0123456789", "0123456789" )
+                [ ( "ABCFGHIJKLNOPRSTUVWXZabcfghijklmnopqrstuvxz", "" )
+                ]
+        , describe "ignores non-alpha characters" <|
+            List.map
+                (testDateToFormattedString (Date.fromCalendarDate 2008 Dec 31))
+                [ ( "0123456789 .,\\//:-%", "0123456789 .,\\//:-%" )
                 ]
         , describe "handles escaped characters and escaped escape characters" <|
             List.map

@@ -819,55 +819,10 @@ withOrdinalSuffix n =
     String.fromInt n ++ ordinalSuffix n
 
 
-{-| Matches a series of pattern characters, or a single-quoted string (which
-may contain '' inside, representing an escaped single-quote).
--}
-patternMatches : Regex
-patternMatches =
-    Regex.fromString "([yYQMwdDEe])\\1*|'(?:[^']|'')*?'(?!')" |> Maybe.withDefault Regex.never
-
-
-escapedSingleQuote : Regex
-escapedSingleQuote =
-    Regex.fromString "''" |> Maybe.withDefault Regex.never
-
-
-toNameForm : Int -> String
-toNameForm length =
-    case length of
-        1 ->
-            "abbreviated"
-
-        2 ->
-            "abbreviated"
-
-        3 ->
-            "abbreviated"
-
-        4 ->
-            "full"
-
-        5 ->
-            "narrow"
-
-        6 ->
-            "short"
-
-        _ ->
-            "invalid"
-
-
-format : RataDie -> String -> String
-format rd match =
-    let
-        char =
-            String.left 1 match
-
-        length =
-            String.length match
-    in
+formatField : Char -> Int -> RataDie -> String
+formatField char length rd =
     case char of
-        "y" ->
+        'y' ->
             case length of
                 2 ->
                     rd |> year |> String.fromInt |> String.padLeft 2 '0' |> String.right 2
@@ -875,7 +830,7 @@ format rd match =
                 _ ->
                     rd |> year |> String.fromInt |> String.padLeft length '0'
 
-        "Y" ->
+        'Y' ->
             case length of
                 2 ->
                     rd |> weekYear |> String.fromInt |> String.padLeft 2 '0' |> String.right 2
@@ -883,7 +838,7 @@ format rd match =
                 _ ->
                     rd |> weekYear |> String.fromInt |> String.padLeft length '0'
 
-        "Q" ->
+        'Q' ->
             case length of
                 1 ->
                     rd |> quarter |> String.fromInt
@@ -903,7 +858,7 @@ format rd match =
                 _ ->
                     ""
 
-        "M" ->
+        'M' ->
             case length of
                 1 ->
                     rd |> monthNumber |> String.fromInt
@@ -923,7 +878,7 @@ format rd match =
                 _ ->
                     ""
 
-        "w" ->
+        'w' ->
             case length of
                 1 ->
                     rd |> weekNumber |> String.fromInt
@@ -934,7 +889,7 @@ format rd match =
                 _ ->
                     ""
 
-        "d" ->
+        'd' ->
             case length of
                 1 ->
                     rd |> day |> String.fromInt
@@ -949,7 +904,7 @@ format rd match =
                 _ ->
                     ""
 
-        "D" ->
+        'D' ->
             case length of
                 1 ->
                     rd |> ordinalDay |> String.fromInt
@@ -963,24 +918,34 @@ format rd match =
                 _ ->
                     ""
 
-        "E" ->
-            case length |> toNameForm of
-                "abbreviated" ->
+        'E' ->
+            case length of
+                -- abbreviated
+                1 ->
                     rd |> weekday |> weekdayToName |> String.left 3
 
-                "full" ->
+                2 ->
+                    rd |> weekday |> weekdayToName |> String.left 3
+
+                3 ->
+                    rd |> weekday |> weekdayToName |> String.left 3
+
+                -- full
+                4 ->
                     rd |> weekday |> weekdayToName
 
-                "narrow" ->
+                -- narrow
+                5 ->
                     rd |> weekday |> weekdayToName |> String.left 1
 
-                "short" ->
+                -- short
+                6 ->
                     rd |> weekday |> weekdayToName |> String.left 2
 
                 _ ->
                     ""
 
-        "e" ->
+        'e' ->
             case length of
                 1 ->
                     rd |> weekdayNumber |> String.fromInt
@@ -989,16 +954,32 @@ format rd match =
                     rd |> weekdayNumber |> String.fromInt
 
                 _ ->
-                    format rd (String.toUpper match)
-
-        "'" ->
-            if match == "''" then
-                "'"
-            else
-                String.slice 1 -1 match |> Regex.replace escapedSingleQuote (\_ -> "'")
+                    rd |> formatField 'E' length
 
         _ ->
             ""
+
+
+type Token
+    = Field Char Int
+    | Literal String
+
+
+{-| Expects `tokens` list reversed for foldl.
+-}
+formatWithTokens : List Token -> RataDie -> String
+formatWithTokens tokens rd =
+    List.foldl
+        (\token formatted ->
+            case token of
+                Field char length ->
+                    formatField char length rd ++ formatted
+
+                Literal str ->
+                    str ++ formatted
+        )
+        ""
+        tokens
 
 
 {-| Convert a date to a string using a pattern as a template.
@@ -1038,8 +1019,41 @@ not include such a field.
 
 -}
 toFormattedString : String -> RataDie -> String
-toFormattedString pattern rd =
-    Regex.replace patternMatches (.match >> format rd) pattern
+toFormattedString pattern =
+    let
+        tokens =
+            pattern |> Regex.find patternMatches |> List.filterMap (.match >> toToken) |> List.reverse
+    in
+    formatWithTokens tokens
+
+
+{-| Matches a series of pattern characters, or a single-quoted string (which
+may contain '' inside, representing an escaped single-quote).
+-}
+patternMatches : Regex
+patternMatches =
+    Regex.fromString "([yYQMwdDEe])\\1*|'(?:[^']|'')*?'(?!')|[^'yYQMwdDEe]+" |> Maybe.withDefault Regex.never
+
+
+escapedSingleQuote : Regex
+escapedSingleQuote =
+    Regex.fromString "''" |> Maybe.withDefault Regex.never
+
+
+toToken : String -> Maybe Token
+toToken match =
+    String.uncons match
+        |> Maybe.map
+            (\( char, rest ) ->
+                if Char.isAlpha char then
+                    Field char (String.length match)
+                else if match == "''" then
+                    Literal "'"
+                else if String.left 1 match == "'" then
+                    Literal (String.slice 1 -1 match |> Regex.replace escapedSingleQuote (\_ -> "'"))
+                else
+                    Literal match
+            )
 
 
 {-| Convenience function for formatting a date in ISO 8601 extended format.

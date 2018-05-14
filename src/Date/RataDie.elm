@@ -95,6 +95,7 @@ Convenience functions for converting dates to records.
 
 -}
 
+import Pattern exposing (Token(..))
 import Regex exposing (Regex)
 
 
@@ -960,11 +961,6 @@ formatField char length rd =
             ""
 
 
-type Token
-    = Field Char Int
-    | Literal String
-
-
 {-| Expects `tokens` list reversed for foldl.
 -}
 formatWithTokens : List Token -> RataDie -> String
@@ -1022,38 +1018,9 @@ toFormattedString : String -> RataDie -> String
 toFormattedString pattern =
     let
         tokens =
-            pattern |> Regex.find patternMatches |> List.filterMap (.match >> toToken) |> List.reverse
+            pattern |> Pattern.fromString |> List.reverse
     in
     formatWithTokens tokens
-
-
-{-| Matches a series of pattern characters, or a single-quoted string (which
-may contain '' inside, representing an escaped single-quote).
--}
-patternMatches : Regex
-patternMatches =
-    Regex.fromString "([yYQMwdDEe])\\1*|'(?:[^']|'')*?'(?!')|[^'yYQMwdDEe]+" |> Maybe.withDefault Regex.never
-
-
-escapedSingleQuote : Regex
-escapedSingleQuote =
-    Regex.fromString "''" |> Maybe.withDefault Regex.never
-
-
-toToken : String -> Maybe Token
-toToken match =
-    String.uncons match
-        |> Maybe.map
-            (\( char, rest ) ->
-                if Char.isAlpha char then
-                    Field char (String.length match)
-                else if match == "''" then
-                    Literal "'"
-                else if String.left 1 match == "'" then
-                    Literal (String.slice 1 -1 match |> Regex.replace escapedSingleQuote (\_ -> "'"))
-                else
-                    Literal match
-            )
 
 
 {-| Convenience function for formatting a date in ISO 8601 extended format.

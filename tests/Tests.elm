@@ -114,15 +114,15 @@ test_WeekDate =
 test_toFormattedString : Test
 test_toFormattedString =
     let
-        testDateToFormattedString : Date -> ( String, String ) -> Test
-        testDateToFormattedString date ( pattern, expected ) =
+        toTest : Date -> ( String, String ) -> Test
+        toTest date ( pattern, expected ) =
             test ("\"" ++ pattern ++ "\" " ++ Debug.toString date) <|
                 \() -> date |> Date.toFormattedString pattern |> equal expected
     in
     describe "toFormattedString"
         [ describe "replaces supported character patterns" <|
             List.map
-                (testDateToFormattedString (Date.fromCalendarDate 2001 Jan 2))
+                (toTest (Date.fromCalendarDate 2001 Jan 2))
                 [ ( "y", "2001" )
                 , ( "yy", "01" )
                 , ( "yyy", "2001" )
@@ -173,25 +173,30 @@ test_toFormattedString =
                 ]
         , describe "removes unsupported pattern characters" <|
             List.map
-                (testDateToFormattedString (Date.fromCalendarDate 2008 Dec 31))
+                (toTest (Date.fromCalendarDate 2008 Dec 31))
                 [ ( "ABCFGHIJKLNOPRSTUVWXZabcfghijklmnopqrstuvxz", "" )
                 ]
         , describe "ignores non-alpha characters" <|
             List.map
-                (testDateToFormattedString (Date.fromCalendarDate 2008 Dec 31))
+                (toTest (Date.fromCalendarDate 2008 Dec 31))
                 [ ( "0123456789 .,\\//:-%", "0123456789 .,\\//:-%" )
                 ]
         , describe "handles escaped characters and escaped escape characters" <|
             List.map
-                (testDateToFormattedString (Date.fromCalendarDate 2001 Jan 2))
+                (toTest (Date.fromCalendarDate 2001 Jan 2))
                 [ ( "'yYQMwdDEe'", "yYQMwdDEe" )
                 , ( "''' '' ''' ''", "' ' ' '" )
                 , ( "'yyyy:' yyyy", "yyyy: 2001" )
                 ]
+        , describe "is lenient on unclosed quotes" <|
+            List.map
+                (toTest (Date.fromCalendarDate 2001 Jan 2))
+                [ ( "yyyy 'yyyy", "2001 yyyy" )
+                ]
         , describe "formats day ordinals" <|
             List.map
                 (\( n, string ) ->
-                    testDateToFormattedString (Date.fromCalendarDate 2001 Jan n) ( "ddd", string )
+                    toTest (Date.fromCalendarDate 2001 Jan n) ( "ddd", string )
                 )
                 [ ( 1, "1st" )
                 , ( 2, "2nd" )
@@ -227,7 +232,7 @@ test_toFormattedString =
                 ]
         , describe "formats with sample patterns as expected" <|
             List.map
-                (testDateToFormattedString (Date.fromCalendarDate 2008 Dec 31))
+                (toTest (Date.fromCalendarDate 2008 Dec 31))
                 [ ( "yyyy-MM-dd", "2008-12-31" )
                 , ( "yyyy-DDD", "2008-366" )
                 , ( "YYYY-'W'ww-e", "2009-W01-3" )

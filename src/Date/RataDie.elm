@@ -197,11 +197,6 @@ firstOfMonth y m =
     daysBeforeYear y + daysBeforeMonth y m + 1
 
 
-firstOfWeekYear : Int -> RataDie
-firstOfWeekYear wy =
-    daysBeforeWeekYear wy + 1
-
-
 
 -- extract
 
@@ -239,50 +234,6 @@ year rd =
 divideInt : Int -> Int -> ( Int, Int )
 divideInt a b =
     ( a // b, a |> remainderBy b )
-
-
-
--- constructors, strict
-
-
-fromOrdinalParts : Int -> Int -> Result String RataDie
-fromOrdinalParts y od =
-    if
-        (od |> isBetween 1 365)
-            || (od == 366 && isLeapYear y)
-    then
-        Ok <| daysBeforeYear y + od
-    else
-        Err <| "Invalid ordinal date (" ++ String.fromInt y ++ ", " ++ String.fromInt od ++ ")"
-
-
-fromCalendarParts : Int -> Int -> Int -> Result String RataDie
-fromCalendarParts y mn d =
-    if
-        (mn |> isBetween 1 12)
-            && (d |> isBetween 1 (daysInMonth y (mn |> numberToMonth)))
-    then
-        Ok <| daysBeforeYear y + daysBeforeMonth y (mn |> numberToMonth) + d
-    else
-        Err <| "Invalid calendar date (" ++ String.fromInt y ++ ", " ++ String.fromInt mn ++ ", " ++ String.fromInt d ++ ")"
-
-
-fromWeekParts : Int -> Int -> Int -> Result String RataDie
-fromWeekParts wy wn wdn =
-    if
-        (wdn |> isBetween 1 7)
-            && ((wn |> isBetween 1 52)
-                    || (wn == 53 && is53WeekYear wy)
-               )
-    then
-        Ok <| daysBeforeWeekYear wy + (wn - 1) * 7 + wdn
-    else
-        Err <| "Invalid week date (" ++ String.fromInt wy ++ ", " ++ String.fromInt wn ++ ", " ++ String.fromInt wdn ++ ")"
-
-
-isBetween : Int -> Int -> Int -> Bool
-isBetween a b x =
-    a <= x && x <= b
 
 
 
@@ -334,6 +285,50 @@ fromWeekDate wy wn wd =
                 52
     in
     daysBeforeWeekYear wy + ((wn |> clamp 1 weeksInWY) - 1) * 7 + (wd |> weekdayToNumber)
+
+
+
+-- constructors, strict
+
+
+fromOrdinalParts : Int -> Int -> Result String RataDie
+fromOrdinalParts y od =
+    if
+        (od |> isBetween 1 365)
+            || (od == 366 && isLeapYear y)
+    then
+        Ok <| daysBeforeYear y + od
+    else
+        Err <| "Invalid ordinal date (" ++ String.fromInt y ++ ", " ++ String.fromInt od ++ ")"
+
+
+fromCalendarParts : Int -> Int -> Int -> Result String RataDie
+fromCalendarParts y mn d =
+    if
+        (mn |> isBetween 1 12)
+            && (d |> isBetween 1 (daysInMonth y (mn |> numberToMonth)))
+    then
+        Ok <| daysBeforeYear y + daysBeforeMonth y (mn |> numberToMonth) + d
+    else
+        Err <| "Invalid calendar date (" ++ String.fromInt y ++ ", " ++ String.fromInt mn ++ ", " ++ String.fromInt d ++ ")"
+
+
+fromWeekParts : Int -> Int -> Int -> Result String RataDie
+fromWeekParts wy wn wdn =
+    if
+        (wdn |> isBetween 1 7)
+            && ((wn |> isBetween 1 52)
+                    || (wn == 53 && is53WeekYear wy)
+               )
+    then
+        Ok <| daysBeforeWeekYear wy + (wn - 1) * 7 + wdn
+    else
+        Err <| "Invalid week date (" ++ String.fromInt wy ++ ", " ++ String.fromInt wn ++ ", " ++ String.fromInt wdn ++ ")"
+
+
+isBetween : Int -> Int -> Int -> Bool
+isBetween a b x =
+    a <= x && x <= b
 
 
 

@@ -4,6 +4,9 @@ import Char
 import Parser exposing ((|.), (|=), Parser)
 
 
+-- date formatting pattern
+
+
 type alias Pattern =
     List Token
 

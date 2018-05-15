@@ -600,6 +600,9 @@ test_fromIsoString =
                 , "2008-012-31"
                 , "2008-12-031"
                 , "2008-0061"
+                , "2018-05-1"
+                , "2018-5"
+                , "20180"
                 ]
         , describe "returns Err for invalid dates" <|
             List.map

@@ -95,8 +95,8 @@ Convenience functions for converting dates to records.
 
 -}
 
+import Parser exposing ((|.), (|=), Parser)
 import Pattern exposing (Token(..))
-import Regex exposing (Regex)
 
 
 {-| -}
@@ -340,62 +340,6 @@ fromWeekDate wy wn wd =
 -- ISO 8601
 
 
-isoDateRegex : Regex
-isoDateRegex =
-    let
-        year_ =
-            -- yyyy
-            -- 1
-            "(\\d{4})"
-
-        cal =
-            --       mm            dd
-            -- 2     3             4
-            "(\\-)?(\\d{2})(?:\\2(\\d{2}))?"
-
-        week =
-            --        ww            d
-            -- 5      6             7
-            "(\\-)?W(\\d{2})(?:\\5(\\d))?"
-
-        ord =
-            --     ddd
-            --     8
-            "\\-?(\\d{3})"
-    in
-    ("^" ++ year_ ++ "(?:" ++ cal ++ "|" ++ week ++ "|" ++ ord ++ ")?$")
-        |> Regex.fromString
-        |> Maybe.withDefault Regex.never
-
-
-fromIsoStringMatches : List (Maybe String) -> Result String RataDie
-fromIsoStringMatches =
-    let
-        toInt : Maybe String -> Int
-        toInt =
-            Maybe.andThen String.toInt >> Maybe.withDefault 1
-    in
-    \matches ->
-        case matches of
-            [ Just yyyy, _, mn, d, _, wn, wdn, od ] ->
-                let
-                    y =
-                        yyyy |> String.toInt |> Maybe.withDefault 1
-                in
-                case ( mn, wn ) of
-                    ( Just _, Nothing ) ->
-                        fromCalendarParts y (mn |> toInt) (d |> toInt)
-
-                    ( Nothing, Just _ ) ->
-                        fromWeekParts y (wn |> toInt) (wdn |> toInt)
-
-                    _ ->
-                        fromOrdinalParts y (od |> toInt)
-
-            _ ->
-                Err "Unexpected results from isoDateRegex"
-
-
 {-| Attempt to create a date from a string in
 [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format. Calendar dates,
 week dates, and ordinal dates are all supported in extended and basic
@@ -414,10 +358,132 @@ friends, any out-of-range values will fail to produce a date.
 -}
 fromIsoString : String -> Result String RataDie
 fromIsoString =
-    Regex.find isoDateRegex
-        >> List.head
-        >> Result.fromMaybe "String is not in IS0 8601 date format"
-        >> Result.andThen (.submatches >> fromIsoStringMatches)
+    Parser.run yearAndDay
+        >> Result.mapError (\_ -> "String is not in IS0 8601 date format")
+        >> Result.andThen fromYearAndDay
+
+
+type DayOfYear
+    = MonthAndDay Int Int
+    | WeekAndWeekday Int Int
+    | OrdinalDay Int
+
+
+fromYearAndDay : ( Int, DayOfYear ) -> Result String RataDie
+fromYearAndDay ( y, doy ) =
+    case doy of
+        MonthAndDay mn d ->
+            fromCalendarParts y mn d
+
+        WeekAndWeekday wn wdn ->
+            fromWeekParts y wn wdn
+
+        OrdinalDay od ->
+            fromOrdinalParts y od
+
+
+
+-- parser
+
+
+yearAndDay : Parser ( Int, DayOfYear )
+yearAndDay =
+    Parser.succeed Tuple.pair
+        |= int4
+        |= dayOfYear
+        |. Parser.end
+
+
+dayOfYear : Parser DayOfYear
+dayOfYear =
+    Parser.oneOf
+        [ Parser.succeed identity
+            -- extended format
+            |. Parser.token "-"
+            |= Parser.oneOf
+                [ Parser.backtrackable
+                    (Parser.map OrdinalDay
+                        int3
+                        |> Parser.andThen Parser.commit
+                    )
+                , Parser.succeed MonthAndDay
+                    |= int2
+                    |= Parser.oneOf
+                        [ Parser.succeed identity
+                            |. Parser.token "-"
+                            |= int2
+                        , Parser.succeed 1
+                        ]
+                , Parser.succeed WeekAndWeekday
+                    |. Parser.token "W"
+                    |= int2
+                    |= Parser.oneOf
+                        [ Parser.succeed identity
+                            |. Parser.token "-"
+                            |= int1
+                        , Parser.succeed 1
+                        ]
+                ]
+
+        -- basic format
+        , Parser.backtrackable
+            (Parser.succeed MonthAndDay
+                |= int2
+                |= Parser.oneOf
+                    [ int2
+                    , Parser.succeed 1
+                    ]
+                |> Parser.andThen Parser.commit
+            )
+        , Parser.map OrdinalDay
+            int3
+        , Parser.succeed WeekAndWeekday
+            |. Parser.token "W"
+            |= int2
+            |= Parser.oneOf
+                [ int1
+                , Parser.succeed 1
+                ]
+        , Parser.succeed
+            (OrdinalDay 1)
+        ]
+
+
+int4 : Parser Int
+int4 =
+    Parser.succeed ()
+        |. Parser.chompIf Char.isDigit
+        |. Parser.chompIf Char.isDigit
+        |. Parser.chompIf Char.isDigit
+        |. Parser.chompIf Char.isDigit
+        |> Parser.mapChompedString
+            (\str _ -> String.toInt str |> Maybe.withDefault 0)
+
+
+int3 : Parser Int
+int3 =
+    Parser.succeed ()
+        |. Parser.chompIf Char.isDigit
+        |. Parser.chompIf Char.isDigit
+        |. Parser.chompIf Char.isDigit
+        |> Parser.mapChompedString
+            (\str _ -> String.toInt str |> Maybe.withDefault 0)
+
+
+int2 : Parser Int
+int2 =
+    Parser.succeed ()
+        |. Parser.chompIf Char.isDigit
+        |. Parser.chompIf Char.isDigit
+        |> Parser.mapChompedString
+            (\str _ -> String.toInt str |> Maybe.withDefault 0)
+
+
+int1 : Parser Int
+int1 =
+    Parser.chompIf Char.isDigit
+        |> Parser.mapChompedString
+            (\str _ -> String.toInt str |> Maybe.withDefault 0)
 
 
 

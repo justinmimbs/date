@@ -17,6 +17,7 @@ equal : a -> a -> Expectation
 equal x y =
     if x == y then
         Pass
+
     else
         NotEqual ( Debug.toString x, Debug.toString y )
 

@@ -223,6 +223,7 @@ year rd =
         n =
             if r1 == 0 then
                 0
+
             else
                 1
     in
@@ -252,6 +253,7 @@ fromOrdinalDate y od =
         daysInY =
             if isLeapYear y then
                 366
+
             else
                 365
     in
@@ -281,6 +283,7 @@ fromWeekDate wy wn wd =
         weeksInWY =
             if is53WeekYear wy then
                 53
+
             else
                 52
     in
@@ -298,6 +301,7 @@ fromOrdinalParts y od =
             || (od == 366 && isLeapYear y)
     then
         Ok <| daysBeforeYear y + od
+
     else
         Err <| "Invalid ordinal date (" ++ String.fromInt y ++ ", " ++ String.fromInt od ++ ")"
 
@@ -309,6 +313,7 @@ fromCalendarParts y mn d =
             && (d |> isBetween 1 (daysInMonth y (mn |> numberToMonth)))
     then
         Ok <| daysBeforeYear y + daysBeforeMonth y (mn |> numberToMonth) + d
+
     else
         Err <| "Invalid calendar date (" ++ String.fromInt y ++ ", " ++ String.fromInt mn ++ ", " ++ String.fromInt d ++ ")"
 
@@ -322,6 +327,7 @@ fromWeekParts wy wn wdn =
                )
     then
         Ok <| daysBeforeWeekYear wy + (wn - 1) * 7 + wdn
+
     else
         Err <| "Invalid week date (" ++ String.fromInt wy ++ ", " ++ String.fromInt wn ++ ", " ++ String.fromInt wdn ++ ")"
 
@@ -518,6 +524,7 @@ toCalendarDateHelp y m d =
     in
     if mn < 12 && d > monthDays then
         toCalendarDateHelp y (mn + 1 |> numberToMonth) (d - monthDays)
+
     else
         { year = y
         , month = m
@@ -558,6 +565,7 @@ daysInMonth y m =
         Feb ->
             if isLeapYear y then
                 29
+
             else
                 28
 
@@ -598,6 +606,7 @@ daysBeforeMonth y m =
         leapDays =
             if isLeapYear y then
                 1
+
             else
                 0
     in
@@ -858,6 +867,7 @@ ordinalSuffix n =
         min
             (if nn < 20 then
                 nn
+
              else
                 nn |> modBy 10
             )
@@ -1375,6 +1385,7 @@ ceiling interval rd =
     in
     if rd == floored then
         rd
+
     else
         let
             ( n, unit ) =
@@ -1408,6 +1419,7 @@ range interval step start end =
     in
     if first < end then
         rangeHelp unit (max 1 step * n) end [] first
+
     else
         []
 
@@ -1416,5 +1428,6 @@ rangeHelp : Unit -> Int -> RataDie -> List RataDie -> RataDie -> List RataDie
 rangeHelp unit step end revList rd =
     if rd < end then
         rangeHelp unit step end (rd :: revList) (rd |> add unit step)
+
     else
         List.reverse revList

@@ -27,6 +27,7 @@ module Date.RataDie
         , toIsoString
         , toOrdinalDate
         , toWeekDate
+        , today
         , weekNumber
         , weekYear
         , weekday
@@ -49,7 +50,7 @@ module offers an opaque type for better type-safety.
 
 ## Constructors
 
-@docs fromCalendarDate, fromOrdinalDate, fromWeekDate
+@docs fromCalendarDate, fromOrdinalDate, fromWeekDate, today
 
 
 ## Formatting
@@ -97,6 +98,8 @@ Convenience functions for converting dates to records.
 
 import Parser exposing ((|.), (|=), Parser)
 import Pattern exposing (Token(..))
+import Task exposing (Task)
+import Time
 
 
 {-| -}
@@ -1431,3 +1434,62 @@ rangeHelp unit step end revList rd =
 
     else
         List.reverse revList
+
+
+
+-- today
+
+
+{-| Get the current local date.
+-}
+today : Task Never RataDie
+today =
+    Task.map2
+        (\currentTime currentOffset ->
+            fromCalendarDate
+                (currentTime |> Time.toYear currentOffset)
+                (currentTime |> Time.toMonth currentOffset |> fromTimeMonth)
+                (currentTime |> Time.toDay currentOffset)
+        )
+        Time.now
+        Time.here
+
+
+fromTimeMonth : Time.Month -> Month
+fromTimeMonth m =
+    case m of
+        Time.Jan ->
+            Jan
+
+        Time.Feb ->
+            Feb
+
+        Time.Mar ->
+            Mar
+
+        Time.Apr ->
+            Apr
+
+        Time.May ->
+            May
+
+        Time.Jun ->
+            Jun
+
+        Time.Jul ->
+            Jul
+
+        Time.Aug ->
+            Aug
+
+        Time.Sep ->
+            Sep
+
+        Time.Oct ->
+            Oct
+
+        Time.Nov ->
+            Nov
+
+        Time.Dec ->
+            Dec

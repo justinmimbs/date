@@ -29,6 +29,7 @@ module Date
         , toOrdinalDate
         , toRataDie
         , toWeekDate
+        , today
         , weekNumber
         , weekYear
         , weekday
@@ -44,7 +45,7 @@ module Date
 
 ## Constructors
 
-@docs fromCalendarDate, fromOrdinalDate, fromWeekDate
+@docs fromCalendarDate, fromOrdinalDate, fromWeekDate, today
 
 
 ## Formatting
@@ -99,6 +100,7 @@ Convert a `Date` to and from a raw `Int` representing the date in
 -}
 
 import Date.RataDie as RataDie exposing (RataDie)
+import Task exposing (Task)
 
 
 {-| Represents a date without a time or zone.
@@ -667,3 +669,14 @@ weekYear (RD rd) =
 year : Date -> Int
 year (RD rd) =
     RataDie.year rd
+
+
+
+-- today
+
+
+{-| Get the current local date.
+-}
+today : Task Never Date
+today =
+    Task.map RD RataDie.today

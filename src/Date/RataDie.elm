@@ -1439,48 +1439,8 @@ today =
         (\currentTime currentOffset ->
             fromCalendarDate
                 (currentTime |> Time.toYear currentOffset)
-                (currentTime |> Time.toMonth currentOffset |> fromTimeMonth)
+                (currentTime |> Time.toMonth currentOffset)
                 (currentTime |> Time.toDay currentOffset)
         )
         Time.now
         Time.here
-
-
-fromTimeMonth : Time.Month -> Month
-fromTimeMonth m =
-    case m of
-        Time.Jan ->
-            Jan
-
-        Time.Feb ->
-            Feb
-
-        Time.Mar ->
-            Mar
-
-        Time.Apr ->
-            Apr
-
-        Time.May ->
-            May
-
-        Time.Jun ->
-            Jun
-
-        Time.Jul ->
-            Jul
-
-        Time.Aug ->
-            Aug
-
-        Time.Sep ->
-            Sep
-
-        Time.Oct ->
-            Oct
-
-        Time.Nov ->
-            Nov
-
-        Time.Dec ->
-            Dec

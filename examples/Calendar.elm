@@ -1,11 +1,11 @@
 module Calendar exposing (main)
 
 import Browser
-import Date exposing (Date, Interval(..), Month(..), Unit(..))
+import Date exposing (Date, Interval(..), Unit(..))
 import Html exposing (Html)
 import Html.Attributes
 import Task exposing (Task)
-import Time
+import Time exposing (Month(..))
 
 
 main : Program () Model Msg

@@ -1,7 +1,8 @@
 module Tests exposing (..)
 
-import Date exposing (Date, Interval(..), Month(..), Unit(..), Weekday(..))
+import Date exposing (Date, Interval(..), Unit(..))
 import Shim exposing (Expectation, Test, describe, equal, test)
+import Time exposing (Month(..), Weekday(..))
 
 
 

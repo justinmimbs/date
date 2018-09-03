@@ -1,10 +1,10 @@
 module Date.RataDie
     exposing
         ( Interval(..)
-        , Month(..)
+        , Month
         , RataDie
         , Unit(..)
-        , Weekday(..)
+        , Weekday
         , add
         , ceiling
         , day
@@ -99,7 +99,7 @@ Convenience functions for converting dates to records.
 import Parser exposing ((|.), (|=), Parser)
 import Pattern exposing (Token(..))
 import Task exposing (Task)
-import Time
+import Time exposing (Month(..), Weekday(..))
 
 
 {-| -}
@@ -107,31 +107,32 @@ type alias RataDie =
     Int
 
 
-{-| -}
-type Month
-    = Jan
-    | Feb
-    | Mar
-    | Apr
-    | May
-    | Jun
-    | Jul
-    | Aug
-    | Sep
-    | Oct
-    | Nov
-    | Dec
+{-| The `Month` type used in this package is an alias of [`Time.Month`](https://package.elm-lang.org/packages/elm/time/latest/Time#Month)
+from `elm/time`. So if you need to express `Month` values, like 'Jan', then
+you'll need to import them from `Time`.
+
+    import Date exposing (Date)
+    import Time exposing (Month(..))
+
+    Date.fromCalendarDate 2020 Jan 1
+
+-}
+type alias Month =
+    Time.Month
 
 
-{-| -}
-type Weekday
-    = Mon
-    | Tue
-    | Wed
-    | Thu
-    | Fri
-    | Sat
-    | Sun
+{-| The `Weekday` type used in this package is an alias of [`Time.Weekday`](https://package.elm-lang.org/packages/elm/time/latest/Time#Weekday)
+from `elm/time`. So if you need to express `Weekday` values, like 'Mon', then
+you'll need to import them from `Time`.
+
+    import Date exposing (Date)
+    import Time exposing (Weekday(..))
+
+    Date.fromWeekDate 2020 1 Mon
+
+-}
+type alias Weekday =
+    Time.Weekday
 
 
 

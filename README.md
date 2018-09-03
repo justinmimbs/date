@@ -13,8 +13,8 @@ elm install justinmimbs/date
 ## Examples
 
 ```elm
-import Date exposing (Date, Month(..), Weekday(..), Unit(..), Interval(..))
-
+import Date exposing (Date, Interval(..), Unit(..))
+import Time exposing (Month(..), Weekday(..))
 
 Date.fromCalendarDate 2018 Sep 26
     |> Date.floor Monday

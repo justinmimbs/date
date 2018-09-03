@@ -2,9 +2,9 @@ module Date
     exposing
         ( Date
         , Interval(..)
-        , Month(..)
+        , Month
         , Unit(..)
-        , Weekday(..)
+        , Weekday
         , add
         , ceiling
         , day
@@ -101,6 +101,7 @@ Convert a `Date` to and from a raw `Int` representing the date in
 
 import Date.RataDie as RataDie exposing (RataDie)
 import Task exposing (Task)
+import Time exposing (Month(..), Weekday(..))
 
 
 {-| Represents a date without a time or zone.
@@ -125,31 +126,32 @@ fromRataDie rd =
 --
 
 
-{-| -}
-type Month
-    = Jan
-    | Feb
-    | Mar
-    | Apr
-    | May
-    | Jun
-    | Jul
-    | Aug
-    | Sep
-    | Oct
-    | Nov
-    | Dec
+{-| The `Month` type used in this package is an alias of [`Time.Month`](https://package.elm-lang.org/packages/elm/time/latest/Time#Month)
+from `elm/time`. So if you need to express `Month` values, like 'Jan', then
+you'll need to import them from `Time`.
+
+    import Date exposing (Date)
+    import Time exposing (Month(..))
+
+    Date.fromCalendarDate 2020 Jan 1
+
+-}
+type alias Month =
+    Time.Month
 
 
-{-| -}
-type Weekday
-    = Mon
-    | Tue
-    | Wed
-    | Thu
-    | Fri
-    | Sat
-    | Sun
+{-| The `Weekday` type used in this package is an alias of [`Time.Weekday`](https://package.elm-lang.org/packages/elm/time/latest/Time#Weekday)
+from `elm/time`. So if you need to express `Weekday` values, like 'Mon', then
+you'll need to import them from `Time`.
+
+    import Date exposing (Date)
+    import Time exposing (Weekday(..))
+
+    Date.fromWeekDate 2020 1 Mon
+
+-}
+type alias Weekday =
+    Time.Weekday
 
 
 {-| -}
@@ -174,136 +176,6 @@ type Interval
     | Saturday
     | Sunday
     | Day
-
-
-exportMonth : Month -> RataDie.Month
-exportMonth m =
-    case m of
-        Jan ->
-            RataDie.Jan
-
-        Feb ->
-            RataDie.Feb
-
-        Mar ->
-            RataDie.Mar
-
-        Apr ->
-            RataDie.Apr
-
-        May ->
-            RataDie.May
-
-        Jun ->
-            RataDie.Jun
-
-        Jul ->
-            RataDie.Jul
-
-        Aug ->
-            RataDie.Aug
-
-        Sep ->
-            RataDie.Sep
-
-        Oct ->
-            RataDie.Oct
-
-        Nov ->
-            RataDie.Nov
-
-        Dec ->
-            RataDie.Dec
-
-
-importMonth : RataDie.Month -> Month
-importMonth m =
-    case m of
-        RataDie.Jan ->
-            Jan
-
-        RataDie.Feb ->
-            Feb
-
-        RataDie.Mar ->
-            Mar
-
-        RataDie.Apr ->
-            Apr
-
-        RataDie.May ->
-            May
-
-        RataDie.Jun ->
-            Jun
-
-        RataDie.Jul ->
-            Jul
-
-        RataDie.Aug ->
-            Aug
-
-        RataDie.Sep ->
-            Sep
-
-        RataDie.Oct ->
-            Oct
-
-        RataDie.Nov ->
-            Nov
-
-        RataDie.Dec ->
-            Dec
-
-
-exportWeekday : Weekday -> RataDie.Weekday
-exportWeekday wd =
-    case wd of
-        Mon ->
-            RataDie.Mon
-
-        Tue ->
-            RataDie.Tue
-
-        Wed ->
-            RataDie.Wed
-
-        Thu ->
-            RataDie.Thu
-
-        Fri ->
-            RataDie.Fri
-
-        Sat ->
-            RataDie.Sat
-
-        Sun ->
-            RataDie.Sun
-
-
-importWeekday : RataDie.Weekday -> Weekday
-importWeekday wd =
-    case wd of
-        RataDie.Mon ->
-            Mon
-
-        RataDie.Tue ->
-            Tue
-
-        RataDie.Wed ->
-            Wed
-
-        RataDie.Thu ->
-            Thu
-
-        RataDie.Fri ->
-            Fri
-
-        RataDie.Sat ->
-            Sat
-
-        RataDie.Sun ->
-            Sun
 
 
 exportUnit : Unit -> RataDie.Unit
@@ -439,7 +311,7 @@ values will be clamped.
 -}
 fromCalendarDate : Int -> Month -> Int -> Date
 fromCalendarDate y m d =
-    RD <| RataDie.fromCalendarDate y (exportMonth m) d
+    RD <| RataDie.fromCalendarDate y m d
 
 
 {-| Attempt to create a date from a string in
@@ -482,13 +354,13 @@ out-of-range week values will be clamped.
 -}
 fromWeekDate : Int -> Int -> Weekday -> Date
 fromWeekDate wy wn wd =
-    RD <| RataDie.fromWeekDate wy wn (exportWeekday wd)
+    RD <| RataDie.fromWeekDate wy wn wd
 
 
 {-| -}
 month : Date -> Month
 month (RD rd) =
-    RataDie.month rd |> importMonth
+    RataDie.month rd
 
 
 {-| -}
@@ -500,19 +372,19 @@ monthNumber (RD rd) =
 {-| -}
 monthToNumber : Month -> Int
 monthToNumber =
-    exportMonth >> RataDie.monthToNumber
+    RataDie.monthToNumber
 
 
 {-| -}
 numberToMonth : Int -> Month
 numberToMonth =
-    RataDie.numberToMonth >> importMonth
+    RataDie.numberToMonth
 
 
 {-| -}
 numberToWeekday : Int -> Weekday
 numberToWeekday =
-    RataDie.numberToWeekday >> importWeekday
+    RataDie.numberToWeekday
 
 
 {-| Extracts the day of the year.
@@ -550,14 +422,7 @@ range interval step (RD start) (RD end) =
 {-| -}
 toCalendarDate : Date -> { year : Int, month : Month, day : Int }
 toCalendarDate (RD rd) =
-    let
-        date =
-            RataDie.toCalendarDate rd
-    in
-    { year = date.year
-    , month = importMonth date.month
-    , day = date.day
-    }
+    RataDie.toCalendarDate rd
 
 
 {-| Convert a date to a string using a pattern as a template.
@@ -622,20 +487,13 @@ toOrdinalDate (RD rd) =
 {-| -}
 toWeekDate : Date -> { weekYear : Int, weekNumber : Int, weekday : Weekday }
 toWeekDate (RD rd) =
-    let
-        date =
-            RataDie.toWeekDate rd
-    in
-    { weekYear = date.weekYear
-    , weekNumber = date.weekNumber
-    , weekday = importWeekday date.weekday
-    }
+    RataDie.toWeekDate rd
 
 
 {-| -}
 weekday : Date -> Weekday
 weekday (RD rd) =
-    RataDie.weekday rd |> importWeekday
+    RataDie.weekday rd
 
 
 {-| Numbers 1–7 represent Monday–Sunday.
@@ -648,7 +506,7 @@ weekdayNumber (RD rd) =
 {-| -}
 weekdayToNumber : Weekday -> Int
 weekdayToNumber =
-    exportWeekday >> RataDie.weekdayToNumber
+    RataDie.weekdayToNumber
 
 
 {-| -}

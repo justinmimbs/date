@@ -23,10 +23,7 @@ module Date.RataDie
         , ordinalDay
         , quarter
         , range
-        , toCalendarDate
         , toIsoString
-        , toOrdinalDate
-        , toWeekDate
         , today
         , weekNumber
         , weekYear
@@ -48,7 +45,7 @@ module offers an opaque type for better type-safety.
 @docs RataDie, Month, Weekday
 
 
-## Constructors
+## Dates
 
 @docs fromCalendarDate, fromOrdinalDate, fromWeekDate, today
 
@@ -81,13 +78,6 @@ module offers an opaque type for better type-safety.
 ## Extractions
 
 @docs year, quarter, month, monthNumber, ordinalDay, day, weekYear, weekNumber, weekday, weekdayNumber
-
-
-## Records
-
-Convenience functions for converting dates to records.
-
-@docs toCalendarDate, toOrdinalDate, toWeekDate
 
 
 ## Month and Weekday helpers

@@ -24,11 +24,8 @@ module Date
         , ordinalDay
         , quarter
         , range
-        , toCalendarDate
         , toIsoString
-        , toOrdinalDate
         , toRataDie
-        , toWeekDate
         , today
         , weekNumber
         , weekYear
@@ -43,7 +40,7 @@ module Date
 @docs Date, Month, Weekday
 
 
-## Constructors
+## Dates
 
 @docs fromCalendarDate, fromOrdinalDate, fromWeekDate, today
 
@@ -76,13 +73,6 @@ module Date
 ## Extractions
 
 @docs year, quarter, month, monthNumber, ordinalDay, day, weekYear, weekNumber, weekday, weekdayNumber
-
-
-## Records
-
-Convenience functions for converting dates to records.
-
-@docs toCalendarDate, toOrdinalDate, toWeekDate
 
 
 ## Month and Weekday helpers
@@ -419,12 +409,6 @@ range interval step (RD start) (RD end) =
     List.map RD <| RataDie.range (exportInterval interval) step start end
 
 
-{-| -}
-toCalendarDate : Date -> { year : Int, month : Month, day : Int }
-toCalendarDate (RD rd) =
-    RataDie.toCalendarDate rd
-
-
 {-| Convert a date to a string using a pattern as a template.
 
     fromCalendarDate 2007 Mar 15
@@ -476,18 +460,6 @@ format pattern (RD rd) =
 toIsoString : Date -> String
 toIsoString (RD rd) =
     RataDie.toIsoString rd
-
-
-{-| -}
-toOrdinalDate : Date -> { year : Int, ordinalDay : Int }
-toOrdinalDate (RD rd) =
-    RataDie.toOrdinalDate rd
-
-
-{-| -}
-toWeekDate : Date -> { weekYear : Int, weekNumber : Int, weekday : Weekday }
-toWeekDate (RD rd) =
-    RataDie.toWeekDate rd
 
 
 {-| -}

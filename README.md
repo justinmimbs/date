@@ -16,6 +16,7 @@ elm install justinmimbs/date
 import Date exposing (Date, Interval(..), Unit(..))
 import Time exposing (Month(..), Weekday(..))
 
+
 Date.fromCalendarDate 2018 Sep 26
     |> Date.floor Monday
     |> Date.add Weeks -2
@@ -28,12 +29,6 @@ Date.fromWeekDate 2018 39 Wed
     |> Date.toRataDie
 
 -- 736963
-
-
-Date.fromRataDie 736963
-    |> Date.toWeekDate
-
--- { weekYear = 2018, weekNumber = 39, weekday = Wed }
 
 
 Date.range

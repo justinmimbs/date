@@ -53,7 +53,7 @@ test_CalendarDate =
                 |> List.map
                     (\calendarDate ->
                         test (Debug.toString calendarDate) <|
-                            \() -> expectIsomorphism fromCalendarDate Date.toCalendarDate calendarDate
+                            \() -> expectIsomorphism fromCalendarDate toCalendarDate calendarDate
                     )
             )
         ]
@@ -83,7 +83,7 @@ test_WeekDate =
                 |> List.map
                     (\calendarDate ->
                         test (Debug.toString calendarDate) <|
-                            \() -> expectIsomorphism Date.toWeekDate fromWeekDate (fromCalendarDate calendarDate)
+                            \() -> expectIsomorphism toWeekDate fromWeekDate (fromCalendarDate calendarDate)
                     )
             )
         , describe "toWeekDate produces results that match samples"
@@ -107,7 +107,7 @@ test_WeekDate =
                 |> List.map
                     (\( calendarDate, weekDate ) ->
                         test (Debug.toString calendarDate) <|
-                            \() -> fromCalendarDate calendarDate |> Date.toWeekDate |> equal weekDate
+                            \() -> fromCalendarDate calendarDate |> toWeekDate |> equal weekDate
                     )
             )
         ]
@@ -682,7 +682,7 @@ test_fromOrdinalDate =
                 (\( ( y, od ), expected ) ->
                     test (Debug.toString ( y, od ) ++ " " ++ Debug.toString expected) <|
                         \() ->
-                            Date.fromOrdinalDate y od |> Date.toOrdinalDate |> equal expected
+                            Date.fromOrdinalDate y od |> toOrdinalDate |> equal expected
                 )
                 [ ( ( 2000, -1 ), OrdinalDate 2000 1 )
                 , ( ( 2000, 0 ), OrdinalDate 2000 1 )
@@ -701,7 +701,7 @@ test_fromCalendarDate =
                 (\( ( y, m, d ), expected ) ->
                     test (Debug.toString ( y, m, d ) ++ " " ++ Debug.toString expected) <|
                         \() ->
-                            Date.fromCalendarDate y m d |> Date.toCalendarDate |> equal expected
+                            Date.fromCalendarDate y m d |> toCalendarDate |> equal expected
                 )
                 [ ( ( 2000, Jan, -1 ), CalendarDate 2000 Jan 1 )
                 , ( ( 2000, Jan, 0 ), CalendarDate 2000 Jan 1 )
@@ -732,7 +732,7 @@ test_fromWeekDate =
                 (\( ( wy, wn, wd ), expected ) ->
                     test (Debug.toString ( wy, wn, wd ) ++ " " ++ Debug.toString expected) <|
                         \() ->
-                            Date.fromWeekDate wy wn wd |> Date.toWeekDate |> equal expected
+                            Date.fromWeekDate wy wn wd |> toWeekDate |> equal expected
                 )
                 [ ( ( 2000, -1, Mon ), WeekDate 2000 1 Mon )
                 , ( ( 2000, 0, Mon ), WeekDate 2000 1 Mon )
@@ -785,11 +785,18 @@ test_numberToWeekday =
                    |> List.filter Date.is53WeekYear
                    |> equal [ 1970, 1976, 1981, 1987, 1992, 1998, 2004, 2009, 2015, 2020, 2026, 2032, 2037 ]
 -}
--- helpers
+-- records
 
 
 type alias OrdinalDate =
     { year : Int, ordinalDay : Int }
+
+
+toOrdinalDate : Date -> OrdinalDate
+toOrdinalDate date =
+    OrdinalDate
+        (date |> Date.year)
+        (date |> Date.ordinalDay)
 
 
 type alias CalendarDate =
@@ -799,6 +806,35 @@ type alias CalendarDate =
 fromCalendarDate : CalendarDate -> Date
 fromCalendarDate { year, month, day } =
     Date.fromCalendarDate year month day
+
+
+toCalendarDate : Date -> CalendarDate
+toCalendarDate date =
+    CalendarDate
+        (date |> Date.year)
+        (date |> Date.month)
+        (date |> Date.day)
+
+
+type alias WeekDate =
+    { weekYear : Int, weekNumber : Int, weekday : Weekday }
+
+
+fromWeekDate : WeekDate -> Date
+fromWeekDate { weekYear, weekNumber, weekday } =
+    Date.fromWeekDate weekYear weekNumber weekday
+
+
+toWeekDate : Date -> WeekDate
+toWeekDate date =
+    WeekDate
+        (date |> Date.weekYear)
+        (date |> Date.weekNumber)
+        (date |> Date.weekday)
+
+
+
+-- dates
 
 
 calendarDatesInYear : Int -> List CalendarDate
@@ -857,13 +893,8 @@ daysInMonth y m =
             31
 
 
-type alias WeekDate =
-    { weekYear : Int, weekNumber : Int, weekday : Weekday }
 
-
-fromWeekDate : WeekDate -> Date
-fromWeekDate { weekYear, weekNumber, weekday } =
-    Date.fromWeekDate weekYear weekNumber weekday
+-- result
 
 
 extractErr : x -> Result x a -> x
@@ -877,7 +908,7 @@ extractErr default result =
 
 
 
---
+-- expectation
 
 
 expectIsomorphism : (x -> y) -> (y -> x) -> x -> Expectation

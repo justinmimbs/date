@@ -10,6 +10,7 @@ module Date
         , day
         , diff
         , floor
+        , format
         , fromCalendarDate
         , fromIsoString
         , fromOrdinalDate
@@ -24,7 +25,6 @@ module Date
         , quarter
         , range
         , toCalendarDate
-        , toFormattedString
         , toIsoString
         , toOrdinalDate
         , toRataDie
@@ -50,7 +50,7 @@ module Date
 
 ## Formatting
 
-@docs toFormattedString
+@docs format
 
 
 ## ISO 8601
@@ -428,7 +428,7 @@ toCalendarDate (RD rd) =
 {-| Convert a date to a string using a pattern as a template.
 
     fromCalendarDate 2007 Mar 15
-        |> toFormattedString "EEEE, MMMM d, y"
+        |> format "EEEE, MMMM d, y"
     -- "Thursday, March 15, 2007"
 
 Each alphabetic character in the pattern represents date or time information;
@@ -457,13 +457,13 @@ month with an ordinal suffix (e.g. "1st", "15th"), as the current standard does
 not include such a field.
 
     fromCalendarDate 2007 Mar 15
-        |> toFormattedString "MMMM ddd, y"
+        |> format "MMMM ddd, y"
     -- "March 15th, 2007"
 
 -}
-toFormattedString : String -> Date -> String
-toFormattedString pattern (RD rd) =
-    RataDie.toFormattedString pattern rd
+format : String -> Date -> String
+format pattern (RD rd) =
+    RataDie.format pattern rd
 
 
 {-| Convenience function for formatting a date in ISO 8601 extended format.

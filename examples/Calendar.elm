@@ -88,7 +88,7 @@ view date =
                 , Html.Attributes.style "margin" "0"
                 , Html.Attributes.style "padding" "0 0.5em 2em"
                 ]
-                [ Html.text (date |> Date.toFormattedString "MMMM yyyy")
+                [ Html.text (date |> Date.format "MMMM yyyy")
                 ]
             , viewMonthTable date
             ]

@@ -10,6 +10,7 @@ module Date.RataDie
         , day
         , diff
         , floor
+        , format
         , fromCalendarDate
         , fromIsoString
         , fromOrdinalDate
@@ -23,7 +24,6 @@ module Date.RataDie
         , quarter
         , range
         , toCalendarDate
-        , toFormattedString
         , toIsoString
         , toOrdinalDate
         , toWeekDate
@@ -55,7 +55,7 @@ module offers an opaque type for better type-safety.
 
 ## Formatting
 
-@docs toFormattedString
+@docs format
 
 
 ## ISO 8601
@@ -1056,7 +1056,7 @@ formatWithTokens tokens rd =
 {-| Convert a date to a string using a pattern as a template.
 
     fromCalendarDate 2007 Mar 15
-        |> toFormattedString "EEEE, MMMM d, y"
+        |> format "EEEE, MMMM d, y"
     -- "Thursday, March 15, 2007"
 
 Each alphabetic character in the pattern represents date or time information;
@@ -1085,12 +1085,12 @@ month with an ordinal suffix (e.g. "1st", "15th"), as the current standard does
 not include such a field.
 
     fromCalendarDate 2007 Mar 15
-        |> toFormattedString "MMMM ddd, y"
+        |> format "MMMM ddd, y"
     -- "March 15th, 2007"
 
 -}
-toFormattedString : String -> RataDie -> String
-toFormattedString pattern =
+format : String -> RataDie -> String
+format pattern =
     let
         tokens =
             pattern |> Pattern.fromString |> List.reverse
@@ -1107,7 +1107,7 @@ toFormattedString pattern =
 -}
 toIsoString : RataDie -> String
 toIsoString =
-    toFormattedString "yyyy-MM-dd"
+    format "yyyy-MM-dd"
 
 
 

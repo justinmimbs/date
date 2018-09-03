@@ -19,7 +19,7 @@ import Time exposing (Month(..), Weekday(..))
 Date.fromCalendarDate 2018 Sep 26
     |> Date.floor Monday
     |> Date.add Weeks -2
-    |> Date.toFormattedString "EEEE, MMMM ddd, yyyy"
+    |> Date.format "EEEE, MMMM ddd, yyyy"
 
 -- "Monday, September 10th, 2018"
 

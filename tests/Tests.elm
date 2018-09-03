@@ -119,9 +119,9 @@ test_toFormattedString =
         toTest : Date -> ( String, String ) -> Test
         toTest date ( pattern, expected ) =
             test ("\"" ++ pattern ++ "\" " ++ Debug.toString date) <|
-                \() -> date |> Date.toFormattedString pattern |> equal expected
+                \() -> date |> Date.format pattern |> equal expected
     in
-    describe "toFormattedString"
+    describe "format"
         [ describe "replaces supported character patterns" <|
             List.map
                 (toTest (Date.fromCalendarDate 2001 Jan 2))
@@ -641,7 +641,7 @@ test_fromIsoString =
                                     (Ok <| fromCalendarDate calendarDate)
                     )
             )
-        , describe "can form an isomorphism with `toFormattedString \"yyyy-DDD\"`"
+        , describe "can form an isomorphism with `format \"yyyy-DDD\"`"
             (List.concat
                 [ List.range 1997 2005
                 ]
@@ -651,12 +651,12 @@ test_fromIsoString =
                         test (Debug.toString calendarDate) <|
                             \() ->
                                 expectIsomorphism
-                                    (Result.map (Date.toFormattedString "yyyy-DDD"))
+                                    (Result.map (Date.format "yyyy-DDD"))
                                     (Result.andThen Date.fromIsoString)
                                     (Ok <| fromCalendarDate calendarDate)
                     )
             )
-        , describe "can form an isomorphism with `toFormattedString \"YYYY-'W'ww-e\"`"
+        , describe "can form an isomorphism with `format \"YYYY-'W'ww-e\"`"
             (List.concat
                 [ List.range 1997 2005
                 ]
@@ -666,7 +666,7 @@ test_fromIsoString =
                         test (Debug.toString calendarDate) <|
                             \() ->
                                 expectIsomorphism
-                                    (Result.map (Date.toFormattedString "YYYY-'W'ww-e"))
+                                    (Result.map (Date.format "YYYY-'W'ww-e"))
                                     (Result.andThen Date.fromIsoString)
                                     (Ok <| fromCalendarDate calendarDate)
                     )

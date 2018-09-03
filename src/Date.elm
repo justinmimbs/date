@@ -37,12 +37,9 @@ module Date
 
 {-|
 
-@docs Date, Month, Weekday
+@docs Date
 
-
-## Dates
-
-@docs fromCalendarDate, fromOrdinalDate, fromWeekDate, today
+@docs today, fromCalendarDate, fromOrdinalDate, fromWeekDate
 
 
 ## Formatting
@@ -75,7 +72,9 @@ module Date
 @docs year, quarter, month, monthNumber, ordinalDay, day, weekYear, weekNumber, weekday, weekdayNumber
 
 
-## Month and Weekday helpers
+## Month and Weekday
+
+@docs Month, Weekday
 
 @docs monthToNumber, numberToMonth, weekdayToNumber, numberToWeekday
 
@@ -117,7 +116,7 @@ fromRataDie rd =
 
 
 {-| The `Month` type used in this package is an alias of [`Time.Month`](https://package.elm-lang.org/packages/elm/time/latest/Time#Month)
-from `elm/time`. So if you need to express `Month` values, like 'Jan', then
+from `elm/time`. So if you need to express `Month` values, like `Jan`, then
 you'll need to import them from `Time`.
 
     import Date exposing (Date)
@@ -131,7 +130,7 @@ type alias Month =
 
 
 {-| The `Weekday` type used in this package is an alias of [`Time.Weekday`](https://package.elm-lang.org/packages/elm/time/latest/Time#Weekday)
-from `elm/time`. So if you need to express `Weekday` values, like 'Mon', then
+from `elm/time`. So if you need to express `Weekday` values, like `Mon`, then
 you'll need to import them from `Time`.
 
     import Date exposing (Date)
@@ -293,7 +292,7 @@ floor interval (RD rd) =
     RD <| RataDie.floor (exportInterval interval) rd
 
 
-{-| Create a date from a year, month, and day of the month; out-of-range day
+{-| Create a date from a year, month, and day of the month. Out-of-range day
 values will be clamped.
 
     fromCalendarDate 2018 Sep 26
@@ -325,7 +324,7 @@ fromIsoString s =
     Result.map RD <| RataDie.fromIsoString s
 
 
-{-| Create a date from a year and day of the year; out-of-range day values
+{-| Create a date from a year and day of the year. Out-of-range day values
 will be clamped.
 
     fromOrdinalDate 2018 314
@@ -336,8 +335,8 @@ fromOrdinalDate y od =
     RD <| RataDie.fromOrdinalDate y od
 
 
-{-| Create a date from a week-numbering year, week number, and weekday;
-out-of-range week values will be clamped.
+{-| Create a date from a week-numbering year, week number, and weekday.
+Out-of-range week values will be clamped.
 
     fromWeekDate 2018 26 Wed
 

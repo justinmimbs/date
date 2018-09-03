@@ -42,12 +42,9 @@ This module exposes the same functions as the `Date` module, but it uses raw
 This may be useful if you need dates as comparables. Otherwise, the `Date`
 module offers an opaque type for better type-safety.
 
-@docs RataDie, Month, Weekday
+@docs RataDie
 
-
-## Dates
-
-@docs fromCalendarDate, fromOrdinalDate, fromWeekDate, today
+@docs today, fromCalendarDate, fromOrdinalDate, fromWeekDate
 
 
 ## Formatting
@@ -80,7 +77,9 @@ module offers an opaque type for better type-safety.
 @docs year, quarter, month, monthNumber, ordinalDay, day, weekYear, weekNumber, weekday, weekdayNumber
 
 
-## Month and Weekday helpers
+## Month and Weekday
+
+@docs Month, Weekday
 
 @docs monthToNumber, numberToMonth, weekdayToNumber, numberToWeekday
 
@@ -98,7 +97,7 @@ type alias RataDie =
 
 
 {-| The `Month` type used in this package is an alias of [`Time.Month`](https://package.elm-lang.org/packages/elm/time/latest/Time#Month)
-from `elm/time`. So if you need to express `Month` values, like 'Jan', then
+from `elm/time`. So if you need to express `Month` values, like `Jan`, then
 you'll need to import them from `Time`.
 
     import Date exposing (Date)
@@ -112,7 +111,7 @@ type alias Month =
 
 
 {-| The `Weekday` type used in this package is an alias of [`Time.Weekday`](https://package.elm-lang.org/packages/elm/time/latest/Time#Weekday)
-from `elm/time`. So if you need to express `Weekday` values, like 'Mon', then
+from `elm/time`. So if you need to express `Weekday` values, like `Mon`, then
 you'll need to import them from `Time`.
 
     import Date exposing (Date)
@@ -235,7 +234,7 @@ divideInt a b =
 -- constructors, clamping
 
 
-{-| Create a date from a year and day of the year; out-of-range day values
+{-| Create a date from a year and day of the year. Out-of-range day values
 will be clamped.
 
     fromOrdinalDate 2018 314
@@ -254,7 +253,7 @@ fromOrdinalDate y od =
     daysBeforeYear y + (od |> clamp 1 daysInY)
 
 
-{-| Create a date from a year, month, and day of the month; out-of-range day
+{-| Create a date from a year, month, and day of the month. Out-of-range day
 values will be clamped.
 
     fromCalendarDate 2018 Sep 26
@@ -265,8 +264,8 @@ fromCalendarDate y m d =
     daysBeforeYear y + daysBeforeMonth y m + (d |> clamp 1 (daysInMonth y m))
 
 
-{-| Create a date from a week-numbering year, week number, and weekday;
-out-of-range week values will be clamped.
+{-| Create a date from a week-numbering year, week number, and weekday.
+Out-of-range week values will be clamped.
 
     fromWeekDate 2018 26 Wed
 

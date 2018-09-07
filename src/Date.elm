@@ -1,39 +1,16 @@
-module Date
-    exposing
-        ( Date
-        , Interval(..)
-        , Month
-        , Unit(..)
-        , Weekday
-        , add
-        , ceiling
-        , day
-        , diff
-        , floor
-        , format
-        , fromCalendarDate
-        , fromIsoString
-        , fromOrdinalDate
-        , fromRataDie
-        , fromWeekDate
-        , month
-        , monthNumber
-        , monthToNumber
-        , numberToMonth
-        , numberToWeekday
-        , ordinalDay
-        , quarter
-        , range
-        , toIsoString
-        , toRataDie
-        , today
-        , weekNumber
-        , weekYear
-        , weekday
-        , weekdayNumber
-        , weekdayToNumber
-        , year
-        )
+module Date exposing
+    ( Date
+    , today, fromCalendarDate, fromOrdinalDate, fromWeekDate
+    , format
+    , fromIsoString, toIsoString
+    , Unit(..), add, diff
+    , Interval(..), ceiling, floor
+    , range
+    , year, quarter, month, monthNumber, ordinalDay, day, weekYear, weekNumber, weekday, weekdayNumber
+    , Month, Weekday
+    , monthToNumber, numberToMonth, weekdayToNumber, numberToWeekday
+    , toRataDie, fromRataDie
+    )
 
 {-|
 
@@ -309,7 +286,9 @@ week dates, and ordinal dates are all supported in extended and basic
 format.
 
     fromIsoString "2018-09-26"
+
     fromIsoString "2018-W26-3"
+
     fromIsoString "2018-314"
 
 The string must represent a valid date; unlike `fromCalendarDate` and
@@ -426,13 +405,21 @@ Standard #35](http://www.unicode.org/reports/tr35/tr35-43/tr35-dates.html#Date_F
 Only the following subset of formatting characters are available:
 
     "y" -- year
+
     "Y" -- week-numbering year
+
     "Q" -- quarter
+
     "M" -- month
+
     "w" -- week number
+
     "d" -- day
+
     "D" -- ordinal day
+
     "E" -- day of week
+
     "e" -- weekday number / day of week
 
 The non-standard pattern field "ddd" is available to indicate the day of the

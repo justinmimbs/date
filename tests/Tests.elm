@@ -1,4 +1,4 @@
-module Tests exposing (..)
+module Tests exposing (suite)
 
 import Date exposing (Date, Interval(..), Unit(..))
 import Shim exposing (Expectation, Test, describe, equal, test)

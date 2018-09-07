@@ -48,6 +48,9 @@ test_CalendarDate =
             (List.concat
                 [ List.range 1897 1905
                 , List.range 1997 2025
+                , List.range -5 5
+                , List.range -105 -95
+                , List.range -405 -395
                 ]
                 |> List.concatMap calendarDatesInYear
                 |> List.map

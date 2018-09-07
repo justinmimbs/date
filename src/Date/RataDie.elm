@@ -118,9 +118,14 @@ daysBeforeYear y1 =
             y1 - 1
 
         leapYears =
-            (y // 4) - (y // 100) + (y // 400)
+            flooredDiv y 4 - flooredDiv y 100 + flooredDiv y 400
     in
     365 * y + leapYears
+
+
+flooredDiv : Int -> Int -> Int
+flooredDiv n d =
+    Basics.floor (toFloat n / toFloat d)
 
 
 {-| Numbers 1–7 represent Monday–Sunday.
@@ -205,7 +210,7 @@ year rd =
 -}
 divideInt : Int -> Int -> ( Int, Int )
 divideInt a b =
-    ( a // b, a |> remainderBy b )
+    ( flooredDiv a b, a |> modBy b )
 
 
 

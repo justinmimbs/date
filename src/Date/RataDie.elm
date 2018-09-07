@@ -431,6 +431,10 @@ dayOfYear =
 int4 : Parser Int
 int4 =
     Parser.succeed ()
+        |. Parser.oneOf
+            [ Parser.chompIf (\c -> c == '-')
+            , Parser.succeed ()
+            ]
         |. Parser.chompIf Char.isDigit
         |. Parser.chompIf Char.isDigit
         |. Parser.chompIf Char.isDigit
@@ -878,7 +882,7 @@ formatField char length rd =
                     rd |> year |> String.fromInt |> String.padLeft 2 '0' |> String.right 2
 
                 _ ->
-                    rd |> year |> String.fromInt |> String.padLeft length '0'
+                    rd |> year |> padInt length
 
         'Y' ->
             case length of
@@ -886,7 +890,7 @@ formatField char length rd =
                     rd |> weekYear |> String.fromInt |> String.padLeft 2 '0' |> String.right 2
 
                 _ ->
-                    rd |> weekYear |> String.fromInt |> String.padLeft length '0'
+                    rd |> weekYear |> padInt length
 
         'Q' ->
             case length of
@@ -1008,6 +1012,17 @@ formatField char length rd =
 
         _ ->
             ""
+
+
+padInt : Int -> Int -> String
+padInt length int =
+    (if int < 0 then
+        "-"
+
+     else
+        ""
+    )
+        ++ (abs int |> String.fromInt |> String.padLeft length '0')
 
 
 {-| Expects `tokens` list reversed for foldl.

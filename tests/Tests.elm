@@ -81,7 +81,10 @@ test_WeekDate : Test
 test_WeekDate =
     describe "WeekDate"
         [ describe "WeekDate and Date are isomorphic"
-            (List.range 1997 2025
+            (List.concat
+                [ List.range 1997 2025
+                , List.range -5 5
+                ]
                 |> List.concatMap calendarDatesInYear
                 |> List.map
                     (\calendarDate ->
@@ -632,6 +635,7 @@ test_fromIsoString =
             (List.concat
                 [ List.range 1897 1905
                 , List.range 1997 2025
+                , List.range -5 5
                 ]
                 |> List.concatMap calendarDatesInYear
                 |> List.map
@@ -647,6 +651,7 @@ test_fromIsoString =
         , describe "can form an isomorphism with `format \"yyyy-DDD\"`"
             (List.concat
                 [ List.range 1997 2005
+                , List.range -5 5
                 ]
                 |> List.concatMap calendarDatesInYear
                 |> List.map
@@ -662,6 +667,7 @@ test_fromIsoString =
         , describe "can form an isomorphism with `format \"YYYY-'W'ww-e\"`"
             (List.concat
                 [ List.range 1997 2005
+                , List.range -5 5
                 ]
                 |> List.concatMap calendarDatesInYear
                 |> List.map

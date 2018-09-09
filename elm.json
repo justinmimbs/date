@@ -3,10 +3,9 @@
     "name": "justinmimbs/date",
     "summary": "Work with dates without times or zones",
     "license": "BSD-3-Clause",
-    "version": "2.0.2",
+    "version": "3.0.0",
     "exposed-modules": [
-        "Date",
-        "Date.RataDie"
+        "Date"
     ],
     "elm-version": "0.19.0 <= v < 0.20.0",
     "dependencies": {

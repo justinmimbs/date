@@ -1,68 +1,78 @@
 module Date exposing
     ( Date
-    , today, fromCalendarDate, fromOrdinalDate, fromWeekDate
+    , Month, Weekday
+    , today, fromCalendarDate, fromOrdinalDate, fromWeekDate, fromIsoString, fromRataDie
+    , toIsoString, toRataDie
+    , year, month, day, ordinalDay, weekYear, weekNumber, weekday, quarter, monthNumber, weekdayNumber
     , format
-    , fromIsoString, toIsoString
     , Unit(..), add, diff
     , Interval(..), ceiling, floor
     , range
-    , year, quarter, month, monthNumber, ordinalDay, day, weekYear, weekNumber, weekday, weekdayNumber
-    , Month, Weekday
     , monthToNumber, numberToMonth, weekdayToNumber, numberToWeekday
-    , toRataDie, fromRataDie
     )
 
 {-|
 
 @docs Date
 
-@docs today, fromCalendarDate, fromOrdinalDate, fromWeekDate
+
+## Month and Weekday types
+
+The `Month` and `Weekday` types used in this package are aliases of
+[`Month`][timemonth] and [`Weekday`][timeweekday] from `elm/time`. If you need
+to express literal values, like `Jan` or `Mon`, then you can install `elm/time`
+and import them from `Time`.
+
+    import Date
+    import Time exposing (Month(..), Weekday(..))
+
+    Date.fromCalendarDate 2020 Jan 1
+    Date.fromWeekDate 2020 1 Mon
+
+[timemonth]: https://package.elm-lang.org/packages/elm/time/latest/Time#Month
+[timeweekday]: https://package.elm-lang.org/packages/elm/time/latest/Time#Weekday
+
+@docs Month, Weekday
 
 
-## Formatting
+# Create
+
+@docs today, fromCalendarDate, fromOrdinalDate, fromWeekDate, fromIsoString, fromRataDie
+
+
+# Convert
+
+@docs toIsoString, toRataDie
+
+
+# Extract
+
+@docs year, month, day, ordinalDay, weekYear, weekNumber, weekday, quarter, monthNumber, weekdayNumber
+
+
+# Format
 
 @docs format
 
 
-## ISO 8601
-
-@docs fromIsoString, toIsoString
-
-
-## Arithmetic
+# Arithmetic
 
 @docs Unit, add, diff
 
 
-## Rounding
+# Rounding
 
 @docs Interval, ceiling, floor
 
 
-## Lists
+# Lists
 
 @docs range
 
 
-## Extractions
-
-@docs year, quarter, month, monthNumber, ordinalDay, day, weekYear, weekNumber, weekday, weekdayNumber
-
-
-## Month and Weekday
-
-@docs Month, Weekday
+# Month and Weekday helpers
 
 @docs monthToNumber, numberToMonth, weekdayToNumber, numberToWeekday
-
-
-## Rata Die
-
-Convert a `Date` to and from a raw `Int` representing the date in
-[Rata Die](https://en.wikipedia.org/wiki/Rata_Die). Rata Die is a system for
-assigning numbers to calendar days, using a base date of _1 January 0001_.
-
-@docs toRataDie, fromRataDie
 
 -}
 
@@ -72,55 +82,57 @@ import Task exposing (Task)
 import Time exposing (Month(..), Weekday(..))
 
 
-{-| -}
 type alias RataDie =
     Int
 
 
-{-| Represents a date without a time or zone.
+{-| Represents a date, without time, in an [idealized calendar][gregorian].
+
+[gregorian]: https://en.wikipedia.org/wiki/Proleptic_Gregorian_calendar
+
 -}
 type Date
     = RD RataDie
 
 
 {-| -}
-toRataDie : Date -> Int
-toRataDie (RD rd) =
-    rd
+type alias Month =
+    Time.Month
 
 
 {-| -}
+type alias Weekday =
+    Time.Weekday
+
+
+{-| [Rata Die][ratadie] is a system for assigning numbers to calendar days,
+where the number 1 represents the date _1 January 0001_.
+
+You can losslessly convert a `Date` to and from an `Int` representing the date
+in Rata Die. This makes it a convenient representation for transporting dates
+or using them as comparables.
+
+    (date |> toRataDie |> fromRataDie)
+        == date
+
+[ratadie]: https://en.wikipedia.org/wiki/Rata_Die
+
+-}
 fromRataDie : Int -> Date
 fromRataDie rd =
     RD rd
 
 
-{-| The `Month` type used in this package is an alias of [`Time.Month`](https://package.elm-lang.org/packages/elm/time/latest/Time#Month)
-from `elm/time`. So if you need to express `Month` values, like `Jan`, then
-you'll need to import them from `Time`.
+{-| Convert a date to its number representation in Rata Die.
+See [`fromRataDie`](#fromRataDie).
 
-    import Date exposing (Date)
-    import Time exposing (Month(..))
-
-    Date.fromCalendarDate 2020 Jan 1
+    (date |> toRataDie |> fromRataDie)
+        == date
 
 -}
-type alias Month =
-    Time.Month
-
-
-{-| The `Weekday` type used in this package is an alias of [`Time.Weekday`](https://package.elm-lang.org/packages/elm/time/latest/Time#Weekday)
-from `elm/time`. So if you need to express `Weekday` values, like `Mon`, then
-you'll need to import them from `Time`.
-
-    import Date exposing (Date)
-    import Time exposing (Weekday(..))
-
-    Date.fromWeekDate 2020 1 Mon
-
--}
-type alias Weekday =
-    Time.Weekday
+toRataDie : Date -> Int
+toRataDie (RD rd) =
+    rd
 
 
 
@@ -149,7 +161,7 @@ flooredDiv n d =
     Basics.floor (toFloat n / toFloat d)
 
 
-{-| Numbers 1–7 represent Monday–Sunday.
+{-| The weekday number (1–7), beginning with Monday.
 -}
 weekdayNumber : Date -> Int
 weekdayNumber (RD rd) =
@@ -198,7 +210,8 @@ firstOfMonth y m =
 -- extract
 
 
-{-| -}
+{-| The calendar year.
+-}
 year : Date -> Int
 year (RD rd) =
     let
@@ -238,10 +251,14 @@ divideInt a b =
 -- constructors, clamping
 
 
-{-| Create a date from a year and day of the year. Out-of-range day values
-will be clamped.
+{-| Create a date from an [ordinal date][ordinaldate]: a year and day of the
+year. Out-of-range day values will be clamped.
+
+    import Date exposing (fromOrdinalDate)
 
     fromOrdinalDate 2018 314
+
+[ordinaldate]: https://en.wikipedia.org/wiki/Ordinal_date
 
 -}
 fromOrdinalDate : Int -> Int -> Date
@@ -260,6 +277,9 @@ fromOrdinalDate y od =
 {-| Create a date from a year, month, and day of the month. Out-of-range day
 values will be clamped.
 
+    import Date exposing (fromCalendarDate)
+    import Time exposing (Month(..))
+
     fromCalendarDate 2018 Sep 26
 
 -}
@@ -268,10 +288,15 @@ fromCalendarDate y m d =
     RD <| daysBeforeYear y + daysBeforeMonth y m + (d |> clamp 1 (daysInMonth y m))
 
 
-{-| Create a date from a week-numbering year, week number, and weekday.
-Out-of-range week values will be clamped.
+{-| Create a date from an [ISO week date][weekdate]: a week-numbering year,
+week number, and weekday. Out-of-range week number values will be clamped.
+
+    import Date exposing (fromWeekDate)
+    import Time exposing (Weekday(..))
 
     fromWeekDate 2018 26 Wed
+
+[weekdate]: https://en.wikipedia.org/wiki/ISO_week_date
 
 -}
 fromWeekDate : Int -> Int -> Weekday -> Date
@@ -338,22 +363,31 @@ isBetween a b x =
 -- ISO 8601
 
 
-{-| Attempt to create a date from a string in
-[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format. Calendar dates,
-week dates, and ordinal dates are all supported in extended and basic
-format.
+{-| Attempt to create a date from a string in [ISO 8601][iso8601] format.
+Calendar dates, week dates, and ordinal dates are all supported in extended
+and basic format.
 
+    -- calendar date
     fromIsoString "2018-09-26"
+        == Ok (fromCalendarDate 2018 Sep 26)
 
+
+    -- week date
     fromIsoString "2018-W26-3"
+        == Ok (fromWeekDate 2018 26 Wed)
 
+
+    -- ordinal date
     fromIsoString "2018-314"
+        == Ok (fromOrdinalDate 2018 314)
 
 The string must represent a valid date; unlike `fromCalendarDate` and
 friends, any out-of-range values will fail to produce a date.
 
     fromIsoString "2018-02-29"
-    -- Err "Invalid calendar date"
+        == Err "Invalid calendar date (2018, 2, 29)"
+
+[iso8601]: https://en.wikipedia.org/wiki/ISO_8601
 
 -}
 fromIsoString : String -> Result String Date
@@ -655,7 +689,8 @@ daysBeforeMonth y m =
 -- conversions
 
 
-{-| -}
+{-| Maps `Jan`–`Dec` to 1–12.
+-}
 monthToNumber : Month -> Int
 monthToNumber m =
     case m of
@@ -696,7 +731,8 @@ monthToNumber m =
             12
 
 
-{-| -}
+{-| Maps 1–12 to `Jan`–`Dec`.
+-}
 numberToMonth : Int -> Month
 numberToMonth mn =
     case max 1 mn of
@@ -737,7 +773,8 @@ numberToMonth mn =
             Dec
 
 
-{-| -}
+{-| Maps `Mon`–`Sun` to 1-7.
+-}
 weekdayToNumber : Weekday -> Int
 weekdayToNumber wd =
     case wd of
@@ -763,7 +800,8 @@ weekdayToNumber wd =
             7
 
 
-{-| -}
+{-| Maps 1-7 to `Mon`–`Sun`.
+-}
 numberToWeekday : Int -> Weekday
 numberToWeekday wdn =
     case max 1 wdn of
@@ -800,42 +838,46 @@ quarterToMonth q =
 
 
 
--- extractions (convenience)
+-- extractions
 
 
-{-| Extracts the day of the year.
+{-| The day of the year (1–366).
 -}
 ordinalDay : Date -> Int
 ordinalDay =
     toOrdinalDate >> .ordinalDay
 
 
-{-| -}
+{-| The month as a [`Month`](https://package.elm-lang.org/packages/elm/time/latest/Time#Month)
+value (`Jan`–`Dec`).
+-}
 month : Date -> Month
 month =
     toCalendarDate >> .month
 
 
-{-| -}
+{-| The month number (1–12).
+-}
 monthNumber : Date -> Int
 monthNumber =
     month >> monthToNumber
 
 
-{-| -}
+{-| The quarter of the year (1–4).
+-}
 quarter : Date -> Int
 quarter =
     month >> monthToQuarter
 
 
-{-| Extracts the day of the month.
+{-| The day of the month (1–31).
 -}
 day : Date -> Int
 day =
     toCalendarDate >> .day
 
 
-{-| Extracts the week-numbering year; this is not always the same as the
+{-| The ISO week-numbering year. This is not always the same as the
 calendar year.
 -}
 weekYear : Date -> Int
@@ -843,13 +885,17 @@ weekYear =
     toWeekDate >> .weekYear
 
 
-{-| -}
+{-| The ISO week number of the year (1–53). Most week years have 52 weeks; some
+have 53.
+-}
 weekNumber : Date -> Int
 weekNumber =
     toWeekDate >> .weekNumber
 
 
-{-| -}
+{-| The weekday as a [`Weekday`](https://package.elm-lang.org/packages/elm/time/latest/Time#Weekday)
+value (`Mon`–`Sun`).
+-}
 weekday : Date -> Weekday
 weekday =
     weekdayNumber >> numberToWeekday
@@ -1063,22 +1109,22 @@ formatWithTokens tokens date =
         tokens
 
 
-{-| Convert a date to a string using a pattern as a template.
+{-| Format a date using a string as a template.
 
-    fromCalendarDate 2007 Mar 15
-        |> format "EEEE, MMMM d, y"
-    -- "Thursday, March 15, 2007"
+    format "EEEE, MMMM d, y" (fromCalendarDate 2007 Mar 15)
+        == "Thursday, March 15, 2007"
 
-Each alphabetic character in the pattern represents date or time information;
-the number of times a character is repeated specifies the form of the name to
-use (e.g. "Tue", "Tuesday") or the padding of numbers (e.g. "1", "01").
-Formatting characters are escaped within single-quotes; a single-quote is
-escaped as a sequence of two single-quotes, whether appearing inside or outside
-an escaped sequence.
+Alphabetic characters in the template represent date information; the number of
+times a character is repeated specifies the form of a name (e.g. `"Tue"`,
+`"Tuesday"`) or the padding of a number (e.g. `"1"`, `"01"`).
 
-Patterns are based on Date Format Patterns in [Unicode Technical
-Standard #35](http://www.unicode.org/reports/tr35/tr35-43/tr35-dates.html#Date_Format_Patterns).
-Only the following subset of formatting characters are available:
+Alphabetic characters can be escaped within single-quotes; a single-quote can
+be escaped as a sequence of two single-quotes, whether appearing inside or
+outside an escaped sequence.
+
+Templates are based on Date Format Patterns in [Unicode Technical
+Standard #35][uts35]. Only the following subset of formatting characters
+are available:
 
     "y" -- year
 
@@ -1086,7 +1132,7 @@ Only the following subset of formatting characters are available:
 
     "Q" -- quarter
 
-    "M" -- month
+    "M" -- month (number or name)
 
     "w" -- week number
 
@@ -1094,17 +1140,18 @@ Only the following subset of formatting characters are available:
 
     "D" -- ordinal day
 
-    "E" -- day of week
+    "E" -- weekday name
 
-    "e" -- weekday number / day of week
+    "e" -- weekday number
+
+[uts35]: http://www.unicode.org/reports/tr35/tr35-43/tr35-dates.html#Date_Format_Patterns
 
 The non-standard pattern field "ddd" is available to indicate the day of the
-month with an ordinal suffix (e.g. "1st", "15th"), as the current standard does
-not include such a field.
+month with an ordinal suffix (e.g. `"1st"`, `"15th"`), as the current standard
+does not include such a field.
 
-    fromCalendarDate 2007 Mar 15
-        |> format "MMMM ddd, y"
-    -- "March 15th, 2007"
+    format "MMMM ddd, y" (fromCalendarDate 2007 Mar 15)
+        == "March 15th, 2007"
 
 -}
 format : String -> Date -> String
@@ -1116,11 +1163,10 @@ format pattern =
     formatWithTokens tokens
 
 
-{-| Convenience function for formatting a date in ISO 8601 extended format.
+{-| Convert a date to a string in ISO 8601 extended format.
 
-    fromCalendarDate 2007 Mar 15
-        |> toIsoString
-    -- "2007-03-15"
+    toIsoString (fromCalendarDate 2007 Mar 15)
+        == "2007-03-15"
 
 -}
 toIsoString : Date -> String
@@ -1209,18 +1255,16 @@ type Unit
     | Days
 
 
-{-| Move a date by some number of units.
+{-| Get a past or future date by adding some number of units to a date.
 
-    fromCalendarDate 2018 Sep 26
-        |> add Weeks -2
-    -- fromCalendarDate 2018 Sep 12
+    add Weeks -2 (fromCalendarDate 2018 Sep 26)
+        == fromCalendarDate 2018 Sep 12
 
 When adding `Years` or `Months`, day values are clamped to the end of the
 month if necessary.
 
-    fromCalendarDate 2000 Jan 31
-        |> add Months 1
-    -- fromCalendarDate 2000 Feb 29
+    add Months 1 (fromCalendarDate 2000 Jan 31)
+        == fromCalendarDate 2000 Feb 29
 
 -}
 add : Unit -> Int -> Date -> Date
@@ -1267,12 +1311,10 @@ toMonths rd =
     toFloat wholeMonths + toFloat date.day / 100
 
 
-{-| Find the difference, as a number of some units, between two dates.
+{-| Get the difference, as a number of some units, between two dates.
 
-    diff Months
-        (fromCalendarDate 2007 Mar 15)
-        (fromCalendarDate 2007 Sep 1)
-    -- 5
+    diff Months (fromCalendarDate 2007 Mar 15) (fromCalendarDate 2007 Sep 1)
+        == 5
 
 -}
 diff : Unit -> Date -> Date -> Int
@@ -1319,9 +1361,8 @@ daysSincePreviousWeekday wd date =
 {-| Round down a date to the beginning of the closest interval. The resulting
 date will be less than or equal to the one provided.
 
-    fromCalendarDate 2018 May 11
-        |> floor Tuesday
-    -- fromCalendarDate 2018 May 8
+    floor Tuesday (fromCalendarDate 2018 May 11)
+        == fromCalendarDate 2018 May 8
 
 -}
 floor : Interval -> Date -> Date
@@ -1386,9 +1427,8 @@ intervalToUnits interval =
 {-| Round up a date to the beginning of the closest interval. The resulting
 date will be greater than or equal to the one provided.
 
-    fromCalendarDate 2018 May 11
-        |> ceiling Tuesday
-    -- fromCalendarDate 2018 May 15
+    ceiling Tuesday (fromCalendarDate 2018 May 11)
+        == fromCalendarDate 2018 May 15
 
 -}
 ceiling : Interval -> Date -> Date
@@ -1412,14 +1452,17 @@ ceiling interval date =
 between two dates. The list will start on or after the first date, and end
 before the second date.
 
-    range Day 2
-        (fromCalendarDate 2018 May 8)
-        (fromCalendarDate 2018 May 14)
+    start =
+        fromCalendarDate 2018 May 8
 
-    -- [ fromCalendarDate 2018 May 8
-    -- , fromCalendarDate 2018 May 10
-    -- , fromCalendarDate 2018 May 12
-    -- ]
+    until =
+        fromCalendarDate 2018 May 14
+
+    range Day 2 start until
+        == [ fromCalendarDate 2018 May 8
+           , fromCalendarDate 2018 May 10
+           , fromCalendarDate 2018 May 12
+           ]
 
 -}
 range : Interval -> Int -> Date -> Date -> List Date

@@ -1,7 +1,7 @@
 module Date exposing
     ( Date
     , Month, Weekday
-    , today, fromCalendarDate, fromOrdinalDate, fromWeekDate, fromIsoString, fromRataDie
+    , today, fromPosix, fromCalendarDate, fromOrdinalDate, fromWeekDate, fromIsoString, fromRataDie
     , toIsoString, toRataDie
     , year, month, day, ordinalDay, weekYear, weekNumber, weekday, quarter, monthNumber, weekdayNumber
     , format
@@ -37,7 +37,7 @@ and import them from `Time`.
 
 # Create
 
-@docs today, fromCalendarDate, fromOrdinalDate, fromWeekDate, fromIsoString, fromRataDie
+@docs today, fromPosix, fromCalendarDate, fromOrdinalDate, fromWeekDate, fromIsoString, fromRataDie
 
 
 # Convert
@@ -79,7 +79,7 @@ and import them from `Time`.
 import Parser exposing ((|.), (|=), Parser)
 import Pattern exposing (Token(..))
 import Task exposing (Task)
-import Time exposing (Month(..), Weekday(..))
+import Time exposing (Month(..), Posix, Weekday(..))
 
 
 type alias RataDie =
@@ -110,7 +110,7 @@ where the number 1 represents the date _1 January 0001_.
 
 You can losslessly convert a `Date` to and from an `Int` representing the date
 in Rata Die. This makes it a convenient representation for transporting dates
-or using them as comparables.
+or using them as comparables. For all date values:
 
     (date |> toRataDie |> fromRataDie)
         == date
@@ -123,8 +123,8 @@ fromRataDie rd =
     RD rd
 
 
-{-| Convert a date to its number representation in Rata Die.
-See [`fromRataDie`](#fromRataDie).
+{-| Convert a date to its number representation in Rata Die (see
+[`fromRataDie`](#fromRataDie)). For all date values:
 
     (date |> toRataDie |> fromRataDie)
         == date
@@ -1502,12 +1502,29 @@ rangeHelp unit step until revList current =
 -}
 today : Task Never Date
 today =
-    Task.map2
-        (\currentTime currentOffset ->
-            fromCalendarDate
-                (currentTime |> Time.toYear currentOffset)
-                (currentTime |> Time.toMonth currentOffset)
-                (currentTime |> Time.toDay currentOffset)
-        )
-        Time.now
-        Time.here
+    Task.map2 fromPosix Time.here Time.now
+
+
+
+-- Posix
+
+
+{-| Create a date from a time [`Zone`][zone] and a [`Posix`][posix] time. This
+conversion loses the time information associated with the `Posix` value.
+
+    import Date exposing (fromCalendarDate, fromPosix)
+    import Time exposing (millisToPosix, utc, Month(..))
+
+    fromPosix utc (millisToPosix 0)
+        == fromCalendarDate 1970 Jan 1
+
+[zone]: https://package.elm-lang.org/packages/elm/time/latest/Time#Zone
+[posix]: https://package.elm-lang.org/packages/elm/time/latest/Time#Posix
+
+-}
+fromPosix : Time.Zone -> Posix -> Date
+fromPosix zone posix =
+    fromCalendarDate
+        (posix |> Time.toYear zone)
+        (posix |> Time.toMonth zone)
+        (posix |> Time.toDay zone)

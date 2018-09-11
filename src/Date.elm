@@ -940,8 +940,27 @@ withOrdinalSuffix n =
     String.fromInt n ++ ordinalSuffix n
 
 
-formatField : Char -> Int -> Date -> String
-formatField char length date =
+type alias Language =
+    { monthName : Month -> String
+    , monthNameShort : Month -> String
+    , weekdayName : Weekday -> String
+    , weekdayNameShort : Weekday -> String
+    , dayWithSuffix : Int -> String
+    }
+
+
+language_en : Language
+language_en =
+    { monthName = monthToName
+    , monthNameShort = monthToName >> String.left 3
+    , weekdayName = weekdayToName
+    , weekdayNameShort = weekdayToName >> String.left 3
+    , dayWithSuffix = withOrdinalSuffix
+    }
+
+
+formatField : Language -> Char -> Int -> Date -> String
+formatField language char length date =
     case char of
         'y' ->
             case length of
@@ -988,13 +1007,13 @@ formatField char length date =
                     date |> monthNumber |> String.fromInt |> String.padLeft 2 '0'
 
                 3 ->
-                    date |> month |> monthToName |> String.left 3
+                    date |> month |> language.monthNameShort
 
                 4 ->
-                    date |> month |> monthToName
+                    date |> month |> language.monthName
 
                 5 ->
-                    date |> month |> monthToName |> String.left 1
+                    date |> month |> language.monthNameShort |> String.left 1
 
                 _ ->
                     ""
@@ -1020,7 +1039,7 @@ formatField char length date =
 
                 -- non-standard
                 3 ->
-                    date |> day |> withOrdinalSuffix
+                    date |> day |> language.dayWithSuffix
 
                 _ ->
                     ""
@@ -1043,25 +1062,25 @@ formatField char length date =
             case length of
                 -- abbreviated
                 1 ->
-                    date |> weekday |> weekdayToName |> String.left 3
+                    date |> weekday |> language.weekdayNameShort
 
                 2 ->
-                    date |> weekday |> weekdayToName |> String.left 3
+                    date |> weekday |> language.weekdayNameShort
 
                 3 ->
-                    date |> weekday |> weekdayToName |> String.left 3
+                    date |> weekday |> language.weekdayNameShort
 
                 -- full
                 4 ->
-                    date |> weekday |> weekdayToName
+                    date |> weekday |> language.weekdayName
 
                 -- narrow
                 5 ->
-                    date |> weekday |> weekdayToName |> String.left 1
+                    date |> weekday |> language.weekdayNameShort |> String.left 1
 
                 -- short
                 6 ->
-                    date |> weekday |> weekdayToName |> String.left 2
+                    date |> weekday |> language.weekdayNameShort |> String.left 2
 
                 _ ->
                     ""
@@ -1075,7 +1094,7 @@ formatField char length date =
                     date |> weekdayNumber |> String.fromInt
 
                 _ ->
-                    date |> formatField 'E' length
+                    date |> formatField language 'E' length
 
         _ ->
             ""
@@ -1094,13 +1113,13 @@ padInt length int =
 
 {-| Expects `tokens` list reversed for foldl.
 -}
-formatWithTokens : List Token -> Date -> String
-formatWithTokens tokens date =
+formatWithTokens : Language -> List Token -> Date -> String
+formatWithTokens language tokens date =
     List.foldl
         (\token formatted ->
             case token of
                 Field char length ->
-                    formatField char length date ++ formatted
+                    formatField language char length date ++ formatted
 
                 Literal str ->
                     str ++ formatted
@@ -1160,7 +1179,7 @@ format pattern =
         tokens =
             pattern |> Pattern.fromString |> List.reverse
     in
-    formatWithTokens tokens
+    formatWithTokens language_en tokens
 
 
 {-| Convert a date to a string in ISO 8601 extended format.

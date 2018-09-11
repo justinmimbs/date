@@ -1,9 +1,9 @@
 module Date exposing
     ( Date
     , Month, Weekday
-    , today, fromPosix, fromCalendarDate, fromOrdinalDate, fromWeekDate, fromIsoString, fromRataDie
+    , today, fromPosix, fromCalendarDate, fromWeekDate, fromOrdinalDate, fromIsoString, fromRataDie
     , toIsoString, toRataDie
-    , year, month, day, ordinalDay, weekYear, weekNumber, weekday, quarter, monthNumber, weekdayNumber
+    , year, month, day, weekYear, weekNumber, weekday, ordinalDay, quarter, monthNumber, weekdayNumber
     , format
     , Unit(..), add, diff
     , Interval(..), ceiling, floor
@@ -37,7 +37,7 @@ and import them from `Time`.
 
 # Create
 
-@docs today, fromPosix, fromCalendarDate, fromOrdinalDate, fromWeekDate, fromIsoString, fromRataDie
+@docs today, fromPosix, fromCalendarDate, fromWeekDate, fromOrdinalDate, fromIsoString, fromRataDie
 
 
 # Convert
@@ -47,7 +47,7 @@ and import them from `Time`.
 
 # Extract
 
-@docs year, month, day, ordinalDay, weekYear, weekNumber, weekday, quarter, monthNumber, weekdayNumber
+@docs year, month, day, weekYear, weekNumber, weekday, ordinalDay, quarter, monthNumber, weekdayNumber
 
 
 # Format
@@ -86,7 +86,7 @@ type alias RataDie =
     Int
 
 
-{-| Represents a date, without time, in an [idealized calendar][gregorian].
+{-| Represents a date in an [idealized calendar][gregorian].
 
 [gregorian]: https://en.wikipedia.org/wiki/Proleptic_Gregorian_calendar
 
@@ -256,7 +256,7 @@ year. Out-of-range day values will be clamped.
 
     import Date exposing (fromOrdinalDate)
 
-    fromOrdinalDate 2018 314
+    fromOrdinalDate 2018 269
 
 [ordinaldate]: https://en.wikipedia.org/wiki/Ordinal_date
 
@@ -294,7 +294,7 @@ week number, and weekday. Out-of-range week number values will be clamped.
     import Date exposing (fromWeekDate)
     import Time exposing (Weekday(..))
 
-    fromWeekDate 2018 26 Wed
+    fromWeekDate 2018 39 Wed
 
 [weekdate]: https://en.wikipedia.org/wiki/ISO_week_date
 
@@ -373,13 +373,13 @@ and basic format.
 
 
     -- week date
-    fromIsoString "2018-W26-3"
-        == Ok (fromWeekDate 2018 26 Wed)
+    fromIsoString "2018-W39-3"
+        == Ok (fromWeekDate 2018 39 Wed)
 
 
     -- ordinal date
-    fromIsoString "2018-314"
-        == Ok (fromOrdinalDate 2018 314)
+    fromIsoString "2018-269"
+        == Ok (fromOrdinalDate 2018 269)
 
 The string must represent a valid date; unlike `fromCalendarDate` and
 friends, any out-of-range values will fail to produce a date.
@@ -1498,7 +1498,10 @@ rangeHelp unit step until revList current =
 -- today
 
 
-{-| Get the current local date.
+{-| Get the current local date. See [this page][calendarexample] for a full example.
+
+[calendarexample]: https://github.com/justinmimbs/date/blob/master/examples/Calendar.elm
+
 -}
 today : Task Never Date
 today =

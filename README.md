@@ -45,7 +45,7 @@ These examples are only meant to give a feel for the library; see [the docs][doc
 [docs]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date
 
 
-_Create a date and format it._
+1. Create a date and format it.
 
 ```elm
 import Date
@@ -57,7 +57,7 @@ Date.fromCalendarDate 2018 Sep 26
 ```
 
 
-_Find the next Saturday after a date._
+2. Find the next Saturday after a date.
 
 ```elm
 import Date exposing (Interval(..), Unit(..))
@@ -71,7 +71,7 @@ Date.fromCalendarDate 2018 Sep 26
 ```
 
 
-_List the third Thursday of the month for six months of a year._
+3. List the third Thursday of the month for six months of a year.
 
 ```elm
 import Date exposing (Interval(..), Unit(..))

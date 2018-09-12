@@ -8,6 +8,7 @@ module Date exposing
     , Unit(..), add, diff
     , Interval(..), ceiling, floor
     , range
+    , compare, isBetween, clamp
     , monthToNumber, numberToMonth, weekdayToNumber, numberToWeekday
     )
 
@@ -68,6 +69,11 @@ and import them from `Time`.
 # Lists
 
 @docs range
+
+
+# Ordering
+
+@docs compare, isBetween, clamp
 
 
 # Month and Weekday helpers
@@ -151,7 +157,7 @@ daysBeforeYear y1 =
             y1 - 1
 
         leapYears =
-            flooredDiv y 4 - flooredDiv y 100 + flooredDiv y 400
+            floorDiv y 4 - floorDiv y 100 + floorDiv y 400
     in
     365 * y + leapYears
 
@@ -194,18 +200,18 @@ year (RD rd) =
     let
         ( n400, r400 ) =
             -- 400 * 365 + 97
-            divideInt rd 146097
+            divWithRemainder rd 146097
 
         ( n100, r100 ) =
             -- 100 * 365 + 24
-            divideInt r400 36524
+            divWithRemainder r400 36524
 
         ( n4, r4 ) =
             -- 4 * 365 + 1
-            divideInt r100 1461
+            divWithRemainder r100 1461
 
         ( n1, r1 ) =
-            divideInt r4 365
+            divWithRemainder r4 365
 
         n =
             if r1 == 0 then
@@ -228,7 +234,7 @@ firstOfMonth y m =
 
 
 
--- FROM PARTS (clamping out-of-range values)
+-- FROM PARTS (clamps out-of-range values)
 
 
 {-| Create a date from an [ordinal date][ordinaldate]: a year and day of the
@@ -251,7 +257,7 @@ fromOrdinalDate y od =
             else
                 365
     in
-    RD <| daysBeforeYear y + (od |> clamp 1 daysInY)
+    RD <| daysBeforeYear y + (od |> Basics.clamp 1 daysInY)
 
 
 {-| Create a date from a year, month, and day of the month. Out-of-range day
@@ -265,7 +271,7 @@ values will be clamped.
 -}
 fromCalendarDate : Int -> Month -> Int -> Date
 fromCalendarDate y m d =
-    RD <| daysBeforeYear y + daysBeforeMonth y m + (d |> clamp 1 (daysInMonth y m))
+    RD <| daysBeforeYear y + daysBeforeMonth y m + (d |> Basics.clamp 1 (daysInMonth y m))
 
 
 {-| Create a date from an [ISO week date][weekdate]: a week-numbering year,
@@ -289,17 +295,17 @@ fromWeekDate wy wn wd =
             else
                 52
     in
-    RD <| daysBeforeWeekYear wy + ((wn |> clamp 1 weeksInWY) - 1) * 7 + (wd |> weekdayToNumber)
+    RD <| daysBeforeWeekYear wy + ((wn |> Basics.clamp 1 weeksInWY) - 1) * 7 + (wd |> weekdayToNumber)
 
 
 
--- FROM NUMBERS (failing on out-of-range values)
+-- FROM NUMBERS (fails on out-of-range values)
 
 
 fromOrdinalParts : Int -> Int -> Result String Date
 fromOrdinalParts y od =
     if
-        (od |> isBetween 1 365)
+        (od |> isBetweenInt 1 365)
             || (od == 366 && isLeapYear y)
     then
         Ok <| RD <| daysBeforeYear y + od
@@ -311,8 +317,8 @@ fromOrdinalParts y od =
 fromCalendarParts : Int -> Int -> Int -> Result String Date
 fromCalendarParts y mn d =
     if
-        (mn |> isBetween 1 12)
-            && (d |> isBetween 1 (daysInMonth y (mn |> numberToMonth)))
+        (mn |> isBetweenInt 1 12)
+            && (d |> isBetweenInt 1 (daysInMonth y (mn |> numberToMonth)))
     then
         Ok <| RD <| daysBeforeYear y + daysBeforeMonth y (mn |> numberToMonth) + d
 
@@ -323,8 +329,8 @@ fromCalendarParts y mn d =
 fromWeekParts : Int -> Int -> Int -> Result String Date
 fromWeekParts wy wn wdn =
     if
-        (wdn |> isBetween 1 7)
-            && ((wn |> isBetween 1 52)
+        (wdn |> isBetweenInt 1 7)
+            && ((wn |> isBetweenInt 1 52)
                     || (wn == 53 && is53WeekYear wy)
                )
     then
@@ -1046,7 +1052,7 @@ add unit n (RD rd) =
                     12 * (date.year - 1) + (monthToNumber date.month - 1) + n
 
                 y =
-                    flooredDiv wholeMonths 12 + 1
+                    floorDiv wholeMonths 12 + 1
 
                 m =
                     (wholeMonths |> modBy 12) + 1 |> numberToMonth
@@ -1295,6 +1301,28 @@ fromPosix zone posix =
 today : Task Never Date
 today =
     Task.map2 fromPosix Time.here Time.now
+
+
+
+-- ORDERING
+
+
+{-| -}
+compare : Date -> Date -> Order
+compare (RD a) (RD b) =
+    Basics.compare a b
+
+
+{-| -}
+isBetween : Date -> Date -> Date -> Bool
+isBetween (RD a) (RD b) (RD x) =
+    isBetweenInt a b x
+
+
+{-| -}
+clamp : Date -> Date -> Date -> Date
+clamp (RD a) (RD b) (RD x) =
+    RD <| Basics.clamp a b x
 
 
 
@@ -1550,18 +1578,18 @@ padSignedInt length int =
         ++ (abs int |> String.fromInt |> String.padLeft length '0')
 
 
-flooredDiv : Int -> Int -> Int
-flooredDiv n d =
-    Basics.floor (toFloat n / toFloat d)
+floorDiv : Int -> Int -> Int
+floorDiv a b =
+    Basics.floor (toFloat a / toFloat b)
 
 
 {-| integer division, returning (Quotient, Remainder)
 -}
-divideInt : Int -> Int -> ( Int, Int )
-divideInt a b =
-    ( flooredDiv a b, a |> modBy b )
+divWithRemainder : Int -> Int -> ( Int, Int )
+divWithRemainder a b =
+    ( floorDiv a b, a |> modBy b )
 
 
-isBetween : Int -> Int -> Int -> Bool
-isBetween a b x =
+isBetweenInt : Int -> Int -> Int -> Bool
+isBetweenInt a b x =
     a <= x && x <= b

@@ -4,7 +4,7 @@ module Date exposing
     , today, fromPosix, fromCalendarDate, fromWeekDate, fromOrdinalDate, fromIsoString, fromRataDie
     , toIsoString, toRataDie
     , year, month, day, weekYear, weekNumber, weekday, ordinalDay, quarter, monthNumber, weekdayNumber
-    , format
+    , format, Language, formatWithLanguage
     , Unit(..), add, diff
     , Interval(..), ceiling, floor
     , range
@@ -52,7 +52,7 @@ and import them from `Time`.
 
 # Format
 
-@docs format
+@docs format, Language, formatWithLanguage
 
 
 # Arithmetic
@@ -481,6 +481,8 @@ quarterToMonth q =
 -- TO FORMATTED STRINGS
 
 
+{-| Functions to convert date information to strings in a custom language.
+-}
 type alias Language =
     { monthName : Month -> String
     , monthNameShort : Month -> String
@@ -648,6 +650,23 @@ formatWithTokens language tokens date =
         tokens
 
 
+{-| Format a date in a custom language using a string as a template.
+
+    formatWithLanguage fr "EEEE, ddd MMMM y" (fromOrdinalDate 1970 1)
+        == "jeudi, 1er janvier 1970"
+
+    -- assuming `fr` is a custom `Date.Language`
+
+-}
+formatWithLanguage : Language -> String -> Date -> String
+formatWithLanguage language pattern =
+    let
+        tokens =
+            pattern |> Pattern.fromString |> List.reverse
+    in
+    formatWithTokens language tokens
+
+
 
 -- default language
 
@@ -764,8 +783,8 @@ language_en =
 
 {-| Format a date using a string as a template.
 
-    format "EEEE, MMMM d, y" (fromCalendarDate 2007 Mar 15)
-        == "Thursday, March 15, 2007"
+    format "EEEE, d MMMM y" (fromOrdinalDate 1970 1)
+        == "Thursday, 1 January 1970"
 
 Alphabetic characters in the template represent date information; the number of
 times a character is repeated specifies the form of a name (e.g. `"Tue"`,
@@ -809,11 +828,7 @@ does not include such a field.
 -}
 format : String -> Date -> String
 format pattern =
-    let
-        tokens =
-            pattern |> Pattern.fromString |> List.reverse
-    in
-    formatWithTokens language_en tokens
+    formatWithLanguage language_en pattern
 
 
 {-| Convert a date to a string in ISO 8601 extended format.

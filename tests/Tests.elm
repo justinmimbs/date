@@ -1,6 +1,7 @@
 module Tests exposing (suite)
 
 import Date exposing (Date, Interval(..), Unit(..))
+import Language
 import Shim exposing (Expectation, Test, describe, equal, test)
 import Time exposing (Month(..), Weekday(..))
 
@@ -22,7 +23,8 @@ suite =
         [ test_CalendarDate
         , test_RataDie
         , test_WeekDate
-        , test_toFormattedString
+        , test_format
+        , test_formatWithLanguage
         , test_add
         , test_diff
         , test_floor
@@ -119,8 +121,8 @@ test_WeekDate =
         ]
 
 
-test_toFormattedString : Test
-test_toFormattedString =
+test_format : Test
+test_format =
     let
         toTest : Date -> ( String, String ) -> Test
         toTest date ( pattern, expected ) =
@@ -246,6 +248,37 @@ test_toFormattedString =
                 , ( "YYYY-'W'ww-e", "2009-W01-3" )
                 , ( "M/d/y", "12/31/2008" )
                 , ( "''yy", "'08" )
+                ]
+        ]
+
+
+test_formatWithLanguage : Test
+test_formatWithLanguage =
+    let
+        toTest : Date -> ( String, String ) -> Test
+        toTest date ( pattern, expected ) =
+            test ("\"" ++ pattern ++ "\" " ++ Debug.toString date) <|
+                \() -> date |> Date.formatWithLanguage Language.fr pattern |> equal expected
+    in
+    describe "formatWithLanguage"
+        [ describe "replaces names as expected" <|
+            List.map
+                (toTest (Date.fromCalendarDate 2001 Jan 1))
+                [ ( "MMM", "janv." )
+                , ( "MMMM", "janvier" )
+                , ( "MMMMM", "j" )
+                , ( "MMMMMM", "" )
+                , ( "d", "1" )
+                , ( "dd", "01" )
+                , ( "ddd", "1er" )
+                , ( "dddd", "" )
+                , ( "E", "lun" )
+                , ( "EE", "lun" )
+                , ( "EEE", "lun" )
+                , ( "EEEE", "lundi" )
+                , ( "EEEEE", "l" )
+                , ( "EEEEEE", "lu" )
+                , ( "EEEEEEE", "" )
                 ]
         ]
 

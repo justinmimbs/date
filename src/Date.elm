@@ -87,7 +87,7 @@ type alias Month =
     Time.Month
 
 
-{-| The `Weekday` type used in this package is an alias of [`Weekday`][timemonth]
+{-| The `Weekday` type used in this package is an alias of [`Weekday`][timeweekday]
 from `elm/time`. To express literal values, like `Mon`, you must import them
 from `Time`.
 

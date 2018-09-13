@@ -1226,11 +1226,8 @@ ceiling interval date =
 between two dates. The list will start on or after the first date, and end
 before the second date.
 
-    start =
-        fromCalendarDate 2018 May 8
-
-    until =
-        fromCalendarDate 2018 May 14
+    start = fromCalendarDate 2018 May 8
+    until = fromCalendarDate 2018 May 14
 
     range Day 2 start until
         == [ fromCalendarDate 2018 May 8
@@ -1307,19 +1304,47 @@ today =
 -- ORDERING
 
 
-{-| -}
+{-| Compare two dates. This can be used as the compare function for
+`List.sortWith`.
+
+    import Date exposing (fromOrdinal, compare)
+
+    compare (fromOrdinal 1970 1) (fromOrdinal 2038 1)
+        == LT
+
+-}
 compare : Date -> Date -> Order
 compare (RD a) (RD b) =
     Basics.compare a b
 
 
-{-| -}
+{-| Test if a date is within a range, inclusive of the range values.
+
+    import Date exposing (fromOrdinal, isBetween)
+
+    minimum = fromOrdinal 1970 1
+    maximum = fromOrdinal 2038 1
+
+    isBetween minimum maximum (fromOrdinal 1969 201)
+        == False
+
+-}
 isBetween : Date -> Date -> Date -> Bool
 isBetween (RD a) (RD b) (RD x) =
     isBetweenInt a b x
 
 
-{-| -}
+{-| Clamp a date within a range.
+
+    import Date exposing (fromOrdinal, clamp)
+
+    minimum = fromOrdinal 1970 1
+    maximum = fromOrdinal 2038 1
+
+    clamp minimum maximum (fromOrdinal 1969 201)
+        == fromOrdinal 1970 1
+
+-}
 clamp : Date -> Date -> Date -> Date
 clamp (RD a) (RD b) (RD x) =
     RD <| Basics.clamp a b x

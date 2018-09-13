@@ -36,6 +36,9 @@ suite =
         , test_fromWeekDate
         , test_numberToMonth
         , test_numberToWeekday
+        , test_compare
+        , test_isBetween
+        , test_clamp
         ]
 
 
@@ -827,6 +830,115 @@ test_numberToWeekday =
                    |> List.filter Date.is53WeekYear
                    |> equal [ 1970, 1976, 1981, 1987, 1992, 1998, 2004, 2009, 2015, 2020, 2026, 2032, 2037 ]
 -}
+
+
+test_compare : Test
+test_compare =
+    describe "compare"
+        [ describe "returns an Order" <|
+            List.map
+                (\( a, b, expected ) ->
+                    test (Debug.toString a ++ " " ++ Debug.toString b) <|
+                        \() -> Date.compare a b |> equal expected
+                )
+                [ ( Date.fromOrdinalDate 1970 1, Date.fromOrdinalDate 2038 1, LT )
+                , ( Date.fromOrdinalDate 1970 1, Date.fromOrdinalDate 1970 1, EQ )
+                , ( Date.fromOrdinalDate 2038 1, Date.fromOrdinalDate 1970 1, GT )
+                ]
+        , test "can be used with List.sortWith" <|
+            \() ->
+                [ Date.fromOrdinalDate 2038 1
+                , Date.fromOrdinalDate 2038 19
+                , Date.fromOrdinalDate 1970 1
+                , Date.fromOrdinalDate 1969 201
+                , Date.fromOrdinalDate 2001 1
+                ]
+                    |> List.sortWith Date.compare
+                    |> equal
+                        [ Date.fromOrdinalDate 1969 201
+                        , Date.fromOrdinalDate 1970 1
+                        , Date.fromOrdinalDate 2001 1
+                        , Date.fromOrdinalDate 2038 1
+                        , Date.fromOrdinalDate 2038 19
+                        ]
+        ]
+
+
+test_isBetween : Test
+test_isBetween =
+    let
+        ( a, b, c ) =
+            ( Date.fromOrdinalDate 1969 201
+            , Date.fromOrdinalDate 1970 1
+            , Date.fromOrdinalDate 2038 19
+            )
+
+        toTest : ( String, ( Date, Date, Date ), Bool ) -> Test
+        toTest ( desc, ( minimum, maximum, x ), expected ) =
+            test desc <|
+                \() ->
+                    Date.isBetween minimum maximum x |> equal expected
+    in
+    describe "isBetween"
+        [ describe "when min < max, works as expected" <|
+            List.map toTest
+                [ ( "before", ( b, c, a ), False )
+                , ( "min", ( b, c, b ), True )
+                , ( "middle", ( a, c, b ), True )
+                , ( "max", ( a, b, b ), True )
+                , ( "after", ( a, b, c ), False )
+                ]
+        , describe "when min == max, works as expected" <|
+            List.map toTest
+                [ ( "before", ( b, b, a ), False )
+                , ( "equal", ( b, b, b ), True )
+                , ( "after", ( b, b, c ), False )
+                ]
+        , describe "when min > max, always returns False" <|
+            List.map toTest
+                [ ( "before", ( c, b, a ), False )
+                , ( "min", ( c, b, b ), False )
+                , ( "middle", ( c, a, b ), False )
+                , ( "max", ( b, a, b ), False )
+                , ( "after", ( b, a, c ), False )
+                ]
+        ]
+
+
+test_clamp : Test
+test_clamp =
+    let
+        ( a, b, c ) =
+            ( Date.fromOrdinalDate 1969 201
+            , Date.fromOrdinalDate 1970 1
+            , Date.fromOrdinalDate 2038 19
+            )
+
+        toTest : ( String, ( Date, Date, Date ), Date ) -> Test
+        toTest ( desc, ( minimum, maximum, x ), expected ) =
+            test desc <|
+                \() ->
+                    Date.clamp minimum maximum x |> equal expected
+    in
+    describe "clamp"
+        [ describe "when min < max, works as expected" <|
+            List.map toTest
+                [ ( "before", ( b, c, a ), b )
+                , ( "min", ( b, c, b ), b )
+                , ( "middle", ( a, c, b ), b )
+                , ( "max", ( a, b, b ), b )
+                , ( "after", ( a, b, c ), b )
+                ]
+        , describe "when min == max, works as expected" <|
+            List.map toTest
+                [ ( "before", ( b, b, a ), b )
+                , ( "equal", ( b, b, b ), b )
+                , ( "after", ( b, b, c ), b )
+                ]
+        ]
+
+
+
 -- records
 
 

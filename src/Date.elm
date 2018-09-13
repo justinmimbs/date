@@ -16,23 +16,6 @@ module Date exposing
 
 @docs Date
 
-
-## Month and Weekday types
-
-The `Month` and `Weekday` types used in this package are aliases of
-[`Month`][timemonth] and [`Weekday`][timeweekday] from `elm/time`. If you need
-to express literal values, like `Jan` or `Mon`, then you can install `elm/time`
-and import them from `Time`.
-
-    import Date
-    import Time exposing (Month(..), Weekday(..))
-
-    Date.fromCalendarDate 2020 Jan 1
-    Date.fromWeekDate 2020 1 Mon
-
-[timemonth]: https://package.elm-lang.org/packages/elm/time/latest/Time#Month
-[timeweekday]: https://package.elm-lang.org/packages/elm/time/latest/Time#Weekday
-
 @docs Month, Weekday
 
 
@@ -88,12 +71,34 @@ import Task exposing (Task)
 import Time exposing (Month(..), Posix, Weekday(..))
 
 
-{-| -}
+{-| The `Month` type used in this package is an alias of [`Month`][timemonth]
+from `elm/time`. To express literal values, like `Jan`, you must import them
+from `Time`.
+
+    import Date
+    import Time exposing (Month(..))
+
+    Date.fromCalendarDate 2020 Jan 1
+
+[timemonth]: https://package.elm-lang.org/packages/elm/time/latest/Time#Month
+
+-}
 type alias Month =
     Time.Month
 
 
-{-| -}
+{-| The `Weekday` type used in this package is an alias of [`Weekday`][timemonth]
+from `elm/time`. To express literal values, like `Mon`, you must import them
+from `Time`.
+
+    import Date
+    import Time exposing (Weekday(..))
+
+    Date.fromWeekDate 2020 1 Mon
+
+[timeweekday]: https://package.elm-lang.org/packages/elm/time/latest/Time#Weekday
+
+-}
 type alias Weekday =
     Time.Weekday
 
@@ -102,10 +107,7 @@ type alias RataDie =
     Int
 
 
-{-| Represents a date in an [idealized calendar][gregorian].
-
-[gregorian]: https://en.wikipedia.org/wiki/Proleptic_Gregorian_calendar
-
+{-| Represents a date.
 -}
 type Date
     = RD RataDie
@@ -260,13 +262,15 @@ fromOrdinalDate y od =
     RD <| daysBeforeYear y + (od |> Basics.clamp 1 daysInY)
 
 
-{-| Create a date from a year, month, and day of the month. Out-of-range day
-values will be clamped.
+{-| Create a date from a [calendar date][gregorian]: a year, month, and day of
+the month. Out-of-range day values will be clamped.
 
     import Date exposing (fromCalendarDate)
     import Time exposing (Month(..))
 
     fromCalendarDate 2018 Sep 26
+
+[gregorian]: https://en.wikipedia.org/wiki/Proleptic_Gregorian_calendar
 
 -}
 fromCalendarDate : Int -> Month -> Int -> Date
@@ -453,8 +457,7 @@ weekYear =
     toWeekDate >> .weekYear
 
 
-{-| The ISO week number of the year (1–53). Most week years have 52 weeks; some
-have 53.
+{-| The ISO week number of the year (1–53).
 -}
 weekNumber : Date -> Int
 weekNumber =
@@ -658,6 +661,8 @@ formatWithTokens language tokens date =
 
 {-| Format a date in a custom language using a string as a template.
 
+    import Date exposing (fromOrdinalDate, formatWithLanguage)
+
     formatWithLanguage fr "EEEE, ddd MMMM y" (fromOrdinalDate 1970 1)
         == "jeudi, 1er janvier 1970"
 
@@ -789,6 +794,8 @@ language_en =
 
 {-| Format a date using a string as a template.
 
+    import Date exposing (fromOrdinalDate, format)
+
     format "EEEE, d MMMM y" (fromOrdinalDate 1970 1)
         == "Thursday, 1 January 1970"
 
@@ -828,8 +835,8 @@ The non-standard pattern field "ddd" is available to indicate the day of the
 month with an ordinal suffix (e.g. `"1st"`, `"15th"`), as the current standard
 does not include such a field.
 
-    format "MMMM ddd, y" (fromCalendarDate 2007 Mar 15)
-        == "March 15th, 2007"
+    format "MMMM ddd, y" (fromOrdinalDate 1970 1)
+        == "January 1st, 1970"
 
 -}
 format : String -> Date -> String
@@ -839,8 +846,10 @@ format pattern =
 
 {-| Convert a date to a string in ISO 8601 extended format.
 
-    toIsoString (fromCalendarDate 2007 Mar 15)
-        == "2007-03-15"
+    import Date exposing (fromOrdinalDate, toIsoString)
+
+    toIsoString (fromOrdinalDate 2001 1)
+        == "2001-01-01"
 
 -}
 toIsoString : Date -> String
@@ -855,6 +864,9 @@ toIsoString =
 {-| Attempt to create a date from a string in [ISO 8601][iso8601] format.
 Calendar dates, week dates, and ordinal dates are all supported in extended
 and basic format.
+
+    import Date exposing (fromIsoString, fromCalendarDate, fromWeekDate, fromOrdinalDate)
+    import Time exposing (Month(..), Weekday(..))
 
     -- calendar date
     fromIsoString "2018-09-26"
@@ -1027,6 +1039,9 @@ type Unit
 
 {-| Get a past or future date by adding some number of units to a date.
 
+    import Date exposing (Unit(..), add, fromCalendarDate)
+    import Time exposing (Month(..))
+
     add Weeks -2 (fromCalendarDate 2018 Sep 26)
         == fromCalendarDate 2018 Sep 12
 
@@ -1083,6 +1098,9 @@ toMonths rd =
 
 {-| Get the difference, as a number of some units, between two dates.
 
+    import Date exposing (Unit(..), diff, fromCalendarDate)
+    import Time exposing (Month(..))
+
     diff Months (fromCalendarDate 2007 Mar 15) (fromCalendarDate 2007 Sep 1)
         == 5
 
@@ -1130,6 +1148,9 @@ daysSincePreviousWeekday wd date =
 
 {-| Round down a date to the beginning of the closest interval. The resulting
 date will be less than or equal to the one provided.
+
+    import Date exposing (Interval(..), floor, fromCalendarDate)
+    import Time exposing (Month(..))
 
     floor Tuesday (fromCalendarDate 2018 May 11)
         == fromCalendarDate 2018 May 8
@@ -1197,6 +1218,9 @@ intervalToUnits interval =
 {-| Round up a date to the beginning of the closest interval. The resulting
 date will be greater than or equal to the one provided.
 
+    import Date exposing (Interval(..), ceiling, fromCalendarDate)
+    import Time exposing (Month(..))
+
     ceiling Tuesday (fromCalendarDate 2018 May 11)
         == fromCalendarDate 2018 May 15
 
@@ -1225,6 +1249,9 @@ ceiling interval date =
 {-| Create a list of dates, at rounded intervals, increasing by a step value,
 between two dates. The list will start on or after the first date, and end
 before the second date.
+
+    import Date exposing (Interval(..), range, fromCalendarDate)
+    import Time exposing (Month(..))
 
     start = fromCalendarDate 2018 May 8
     until = fromCalendarDate 2018 May 14

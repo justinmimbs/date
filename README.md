@@ -19,7 +19,7 @@ elm install justinmimbs/date
   - [Ordinal dates][orddate] (`2018 269`)
   - [ISO 8601 strings][isostring] (`"2018-09-26"`)
   - [Rata Die][ratadie] (`736963`)
-- Format dates for display: [`format`][format]
+- Format dates for display: [`format`][format], [`formatWithLanguage`][formatwithlang]
 - Manipulate dates: [`add`][add], [`floor`][floor], [`ceiling`][ceiling]
 - Diff dates: [`diff`][diff]
 - Create lists of dates: [`range`][range]
@@ -31,6 +31,7 @@ elm install justinmimbs/date
 [isostring]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#fromIsoString
 [ratadie]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#fromRataDie
 [format]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#format
+[formatwithlang]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#formatWithLanguage
 [add]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#add
 [floor]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#floor
 [ceiling]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#ceiling
@@ -74,10 +75,10 @@ Date.fromCalendarDate 2018 Sep 26
 3. List the third Thursday of the month for six months of a year.
 
 ```elm
-import Date exposing (Interval(..), Unit(..))
+import Date exposing (Date, Interval(..), Unit(..))
 
 start : Date
-start = 
+start =
     Date.fromOrdinalDate 2019 1
 
 thirdThursday : Date -> Date

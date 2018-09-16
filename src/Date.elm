@@ -4,7 +4,8 @@ module Date exposing
     , today, fromPosix, fromCalendarDate, fromWeekDate, fromOrdinalDate, fromIsoString, fromRataDie
     , toIsoString, toRataDie
     , year, month, day, weekYear, weekNumber, weekday, ordinalDay, quarter, monthNumber, weekdayNumber
-    , format, Language, formatWithLanguage
+    , format
+    , Language, formatWithLanguage
     , Unit(..), add, diff
     , Interval(..), ceiling, floor
     , range
@@ -36,7 +37,12 @@ module Date exposing
 
 # Format
 
-@docs format, Language, formatWithLanguage
+@docs format
+
+
+## Custom Languages
+
+@docs Language, formatWithLanguage
 
 
 # Arithmetic
@@ -1037,7 +1043,7 @@ type Unit
     | Days
 
 
-{-| Get a past or future date by adding some number of units to a date.
+{-| Get a past or future date by adding a number of units to a date.
 
     import Date exposing (Unit(..), add, fromCalendarDate)
     import Time exposing (Month(..))
@@ -1096,13 +1102,15 @@ toMonths rd =
     toFloat wholeMonths + toFloat date.day / 100
 
 
-{-| Get the difference, as a number of some units, between two dates.
+{-| Get the difference, as a number of whole units, between two dates.
 
     import Date exposing (Unit(..), diff, fromCalendarDate)
     import Time exposing (Month(..))
 
-    diff Months (fromCalendarDate 2007 Mar 15) (fromCalendarDate 2007 Sep 1)
-        == 5
+    diff Months
+        (fromCalendarDate 2020 Jan 2)
+        (fromCalendarDate 2020 Apr 1)
+        == 2
 
 -}
 diff : Unit -> Date -> Date -> Int

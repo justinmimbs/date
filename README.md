@@ -13,30 +13,36 @@ elm install justinmimbs/date
 ## Overview
 
 - Get the current local date: [`today`][today]
+- Get dates from `Posix` times: [`fromPosix`][fromPosix]
 - Convert `Date` values both to and from:
-  - [Calendar dates][caldate] (`2018 Sep 26`)
-  - [ISO week dates][weekdate] (`2018 39 Wed`)
-  - [Ordinal dates][orddate] (`2018 269`)
-  - [ISO 8601 strings][isostring] (`"2018-09-26"`)
-  - [Rata Die][ratadie] (`736963`)
-- Format dates for display: [`format`][format], [`formatWithLanguage`][formatwithlang]
+  - [Calendar dates][fromCalendarDate] (`2018 Sep 26`)
+  - [ISO week dates][fromWeekDate] (`2018 39 Wed`)
+  - [Ordinal dates][fromOrdinalDate] (`2018 269`)
+  - [ISO 8601 strings][fromIsoString] (`"2018-09-26"`)
+  - [Rata Die][fromRataDie] (`736963`)
+- Format dates for display: [`format`][format], [`formatWithLanguage`][formatWithLanguage]
 - Manipulate dates: [`add`][add], [`floor`][floor], [`ceiling`][ceiling]
 - Diff dates: [`diff`][diff]
 - Create lists of dates: [`range`][range]
+- Helpers: [`compare`][compare], [`isBetween`][isBetween], [`clamp`][clamp]
 
 [today]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#today
-[caldate]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#fromCalendarDate
-[weekdate]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#fromWeekDate
-[orddate]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#fromOrdinalDate
-[isostring]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#fromIsoString
-[ratadie]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#fromRataDie
+[fromPosix]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#fromPosix
+[fromCalendarDate]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#fromCalendarDate
+[fromWeekDate]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#fromWeekDate
+[fromOrdinalDate]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#fromOrdinalDate
+[fromIsoString]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#fromIsoString
+[fromRataDie]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#fromRataDie
 [format]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#format
-[formatwithlang]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#formatWithLanguage
+[formatWithLanguage]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#formatWithLanguage
 [add]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#add
 [floor]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#floor
 [ceiling]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#ceiling
 [diff]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#diff
 [range]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#range
+[compare]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#compare
+[isBetween]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#isBetween
+[clamp]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#clamp
 
 
 ## Examples
@@ -46,7 +52,7 @@ These examples are only meant to give a feel for the library; see [the docs][doc
 [docs]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date
 
 
-1. Create a date and format it.
+### Create a date and format it
 
 ```elm
 import Date
@@ -58,7 +64,7 @@ Date.fromCalendarDate 2018 Sep 26
 ```
 
 
-2. Find the next Saturday after a date.
+### Find the next Saturday after a date
 
 ```elm
 import Date exposing (Interval(..), Unit(..))
@@ -72,7 +78,7 @@ Date.fromCalendarDate 2018 Sep 26
 ```
 
 
-3. List the third Thursday of the month for six months of a year.
+### List the third Thursday of the month for six months of a year
 
 ```elm
 import Date exposing (Date, Interval(..), Unit(..))

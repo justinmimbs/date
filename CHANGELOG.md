@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.2 - 2018-10-04
+
+#### Fixed
+- `fromIsoString` function now has better error messages
+
+
 ## 3.1.1 - 2018-09-16
 
 _Updated documentation_

@@ -636,7 +636,7 @@ test_fromIsoString =
                 ]
         , describe "returns Err for malformed date strings" <|
             List.map
-                (\s -> test s <| \() -> Date.fromIsoString s |> equal (Err "String is not in IS0 8601 date format"))
+                (\s -> test s <| \() -> Date.fromIsoString s |> extractErr "" |> String.startsWith "Expected a date" |> equal True)
                 [ "200812-31"
                 , "2008-1231"
                 , "2009W01-4"
@@ -666,6 +666,20 @@ test_fromIsoString =
                 , "2008-000"
                 , "2007-366"
                 , "2008-367"
+                ]
+        , describe "returns Err for a valid date followed by a 'T'" <|
+            List.map
+                (\s -> test s <| \() -> Date.fromIsoString s |> equal (Err "Expected a date only, not a date and time"))
+                [ "2018-09-26T00:00:00.000Z"
+                , "2018-W39-3T00:00:00.000Z"
+                , "2018-269T00:00:00.000Z"
+                ]
+        , describe "returns Err for a valid date followed by anything else" <|
+            List.map
+                (\s -> test s <| \() -> Date.fromIsoString s |> equal (Err "Expected a date only"))
+                [ "2018-09-26 "
+                , "2018-W39-3 "
+                , "2018-269 "
                 ]
         , describe "can form an isomorphism with toIsoString"
             (List.concat

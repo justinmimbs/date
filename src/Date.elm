@@ -899,9 +899,44 @@ friends, any out-of-range values will fail to produce a date.
 -}
 fromIsoString : String -> Result String Date
 fromIsoString =
-    Parser.run yearAndDay
-        >> Result.mapError (\_ -> "String is not in IS0 8601 date format")
-        >> Result.andThen fromYearAndDay
+    Parser.run
+        (Parser.succeed identity
+            |= parser
+            |. (Parser.oneOf
+                    [ Parser.map Ok
+                        Parser.end
+                    , Parser.map (always (Err "Expected a date only, not a date and time"))
+                        (Parser.chompIf ((==) 'T'))
+                    , Parser.succeed (Err "Expected a date only")
+                    ]
+                    |> Parser.andThen resultToParser
+               )
+        )
+        >> Result.mapError (List.map deadEndToString >> String.join "; ")
+
+
+deadEndToString : Parser.DeadEnd -> String
+deadEndToString { problem } =
+    case problem of
+        Parser.Problem message ->
+            message
+
+        _ ->
+            "Expected a date in ISO 8601 format"
+
+
+resultToParser : Result String a -> Parser a
+resultToParser result =
+    case result of
+        Ok x ->
+            Parser.succeed x
+
+        Err message ->
+            Parser.problem message
+
+
+
+-- day of year
 
 
 type DayOfYear
@@ -910,8 +945,8 @@ type DayOfYear
     | OrdinalDay Int
 
 
-fromYearAndDay : ( Int, DayOfYear ) -> Result String Date
-fromYearAndDay ( y, doy ) =
+fromYearAndDayOfYear : ( Int, DayOfYear ) -> Result String Date
+fromYearAndDayOfYear ( y, doy ) =
     case doy of
         MonthAndDay mn d ->
             fromCalendarParts y mn d
@@ -927,12 +962,13 @@ fromYearAndDay ( y, doy ) =
 -- parser
 
 
-yearAndDay : Parser ( Int, DayOfYear )
-yearAndDay =
+parser : Parser Date
+parser =
     Parser.succeed Tuple.pair
         |= int4
         |= dayOfYear
-        |. Parser.end
+        |> Parser.andThen
+            (fromYearAndDayOfYear >> resultToParser)
 
 
 dayOfYear : Parser DayOfYear

@@ -9,7 +9,7 @@ module Date exposing
     , Unit(..), add, diff
     , Interval(..), ceiling, floor
     , range
-    , compare, isBetween, clamp
+    , compare, max, min, isBetween, clamp
     , monthToNumber, numberToMonth, weekdayToNumber, numberToWeekday
     )
 
@@ -62,7 +62,7 @@ module Date exposing
 
 # Ordering
 
-@docs compare, isBetween, clamp
+@docs compare, max, min, isBetween, clamp
 
 
 # Month and Weekday helpers
@@ -1387,6 +1387,48 @@ today =
 compare : Date -> Date -> Order
 compare (RD a) (RD b) =
     Basics.compare a b
+
+
+{-| Find the larger of two dates, analogous to the [max function in elm/core][core-max].
+
+    import Date exposing (fromCalendarDate, max)
+    import Time exposing (Month(..))
+
+    max (fromCalendarDate 1997 Sep 2) (fromCalendarDate 1992 Dec 31)
+        == fromCalendarDate 1997 Sep 2
+
+[core-max]: https://package.elm-lang.org/packages/elm/core/latest/Basics#max
+
+-}
+max : Date -> Date -> Date
+max d1 d2 =
+    case compare d1 d2 of
+        GT ->
+            d1
+
+        _ ->
+            d2
+
+
+{-| Find the smaller of two dates, analogous to the [min function in elm/core][core-min].
+
+    import Date exposing (fromCalendarDate, min)
+    import Time exposing (Month(..))
+
+    min (fromCalendarDate 1997 Sep 2) (fromCalendarDate 1992 Dec 31)
+        == fromCalendarDate 1992 Dec 31
+
+[core-min]: https://package.elm-lang.org/packages/elm/core/latest/Basics#min
+
+-}
+min : Date -> Date -> Date
+min d1 d2 =
+    case compare d1 d2 of
+        LT ->
+            d1
+
+        _ ->
+            d2
 
 
 {-| Test if a date is within a range, inclusive of the range values.

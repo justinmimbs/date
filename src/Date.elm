@@ -761,7 +761,7 @@ ordinalSuffix n =
             n |> modBy 100
     in
     case
-        min
+        Basics.min
             (if nn < 20 then
                 nn
 
@@ -1114,7 +1114,7 @@ add unit n (RD rd) =
                 m =
                     (wholeMonths |> modBy 12) + 1 |> numberToMonth
             in
-            RD <| daysBeforeYear y + daysBeforeMonth y m + min date.day (daysInMonth y m)
+            RD <| daysBeforeYear y + daysBeforeMonth y m + Basics.min date.day (daysInMonth y m)
 
         Weeks ->
             RD <| rd + 7 * n
@@ -1317,7 +1317,7 @@ range interval step (RD start) (RD until) =
             RD start |> ceiling interval
     in
     if first < until then
-        rangeHelp unit (max 1 step * n) until [] first
+        rangeHelp unit (Basics.max 1 step * n) until [] first
 
     else
         []
@@ -1609,7 +1609,7 @@ monthToNumber m =
 -}
 numberToMonth : Int -> Month
 numberToMonth mn =
-    case max 1 mn of
+    case Basics.max 1 mn of
         1 ->
             Jan
 
@@ -1678,7 +1678,7 @@ weekdayToNumber wd =
 -}
 numberToWeekday : Int -> Weekday
 numberToWeekday wdn =
-    case max 1 wdn of
+    case Basics.max 1 wdn of
         1 ->
             Mon
 

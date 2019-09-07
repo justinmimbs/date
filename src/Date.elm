@@ -1401,13 +1401,12 @@ compare (RD a) (RD b) =
 
 -}
 max : Date -> Date -> Date
-max d1 d2 =
-    case compare d1 d2 of
-        GT ->
-            d1
+max ((RD a) as d1) ((RD b) as d2) =
+    if a >= b then
+        d1
 
-        _ ->
-            d2
+    else
+        d2
 
 
 {-| Find the smaller of two dates, analogous to the [min function in elm/core][core-min].
@@ -1422,13 +1421,12 @@ max d1 d2 =
 
 -}
 min : Date -> Date -> Date
-min d1 d2 =
-    case compare d1 d2 of
-        LT ->
-            d1
+min ((RD a) as d1) ((RD b) as d2) =
+    if a < b then
+        d1
 
-        _ ->
-            d2
+    else
+        d2
 
 
 {-| Test if a date is within a range, inclusive of the range values.

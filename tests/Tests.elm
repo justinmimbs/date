@@ -38,6 +38,8 @@ suite =
         , test_numberToWeekday
         , test_compare
         , test_isBetween
+        , test_min
+        , test_max
         , test_clamp
         ]
 
@@ -916,6 +918,34 @@ test_isBetween =
                 , ( "max", ( b, a, b ), False )
                 , ( "after", ( b, a, c ), False )
                 ]
+        ]
+
+
+test_min : Test
+test_min =
+    let
+        ( a, b ) =
+            ( Date.fromOrdinalDate 1969 201
+            , Date.fromOrdinalDate 1970 1
+            )
+    in
+    describe "min"
+        [ test "a < b" <| \() -> Date.min a b |> equal a
+        , test "b < a" <| \() -> Date.min b a |> equal a
+        ]
+
+
+test_max : Test
+test_max =
+    let
+        ( a, b ) =
+            ( Date.fromOrdinalDate 1969 201
+            , Date.fromOrdinalDate 1970 1
+            )
+    in
+    describe "max"
+        [ test "a < b" <| \() -> Date.max a b |> equal b
+        , test "b < a" <| \() -> Date.max b a |> equal b
         ]
 
 

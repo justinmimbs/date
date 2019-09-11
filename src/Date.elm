@@ -9,7 +9,7 @@ module Date exposing
     , Unit(..), add, diff
     , Interval(..), ceiling, floor
     , range
-    , compare, max, min, isBetween, clamp
+    , compare, isBetween, min, max, clamp
     , monthToNumber, numberToMonth, weekdayToNumber, numberToWeekday
     )
 
@@ -62,7 +62,7 @@ module Date exposing
 
 # Ordering
 
-@docs compare, max, min, isBetween, clamp
+@docs compare, isBetween, min, max, clamp
 
 
 # Month and Weekday helpers
@@ -1389,44 +1389,38 @@ compare (RD a) (RD b) =
     Basics.compare a b
 
 
-{-| Find the larger of two dates, analogous to the [max function in elm/core][core-max].
+{-| Find the greater of two dates.
 
-    import Date exposing (fromCalendarDate, max)
-    import Time exposing (Month(..))
+    import Date exposing (fromOrdinalDate, max)
 
-    max (fromCalendarDate 1997 Sep 2) (fromCalendarDate 1992 Dec 31)
-        == fromCalendarDate 1997 Sep 2
-
-[core-max]: https://package.elm-lang.org/packages/elm/core/latest/Basics#max
+    max (fromOrdinalDate 1970 1) (fromOrdinalDate 2038 1)
+        == (fromOrdinalDate 2038 1)
 
 -}
 max : Date -> Date -> Date
-max ((RD a) as d1) ((RD b) as d2) =
-    if a >= b then
-        d1
+max ((RD a) as dateA) ((RD b) as dateB) =
+    if a < b then
+        dateB
 
     else
-        d2
+        dateA
 
 
-{-| Find the smaller of two dates, analogous to the [min function in elm/core][core-min].
+{-| Find the lesser of two dates.
 
-    import Date exposing (fromCalendarDate, min)
-    import Time exposing (Month(..))
+    import Date exposing (fromOrdinalDate, min)
 
-    min (fromCalendarDate 1997 Sep 2) (fromCalendarDate 1992 Dec 31)
-        == fromCalendarDate 1992 Dec 31
-
-[core-min]: https://package.elm-lang.org/packages/elm/core/latest/Basics#min
+    min (fromOrdinalDate 1970 1) (fromOrdinalDate 2038 1)
+        == (fromOrdinalDate 1970 1)
 
 -}
 min : Date -> Date -> Date
-min ((RD a) as d1) ((RD b) as d2) =
+min ((RD a) as dateA) ((RD b) as dateB) =
     if a < b then
-        d1
+        dateA
 
     else
-        d2
+        dateB
 
 
 {-| Test if a date is within a range, inclusive of the range values.

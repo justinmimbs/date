@@ -24,7 +24,7 @@ elm install justinmimbs/date
 - Manipulate dates: [`add`][add], [`floor`][floor], [`ceiling`][ceiling]
 - Diff dates: [`diff`][diff]
 - Create lists of dates: [`range`][range]
-- Helpers: [`compare`][compare], [`isBetween`][isBetween], [`clamp`][clamp]
+- Helpers: [`compare`][compare], [`isBetween`][isBetween], [`min`][min], [`max`][max], [`clamp`][clamp]
 
 [today]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#today
 [fromPosix]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#fromPosix
@@ -42,6 +42,8 @@ elm install justinmimbs/date
 [range]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#range
 [compare]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#compare
 [isBetween]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#isBetween
+[min]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#min
+[max]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#max
 [clamp]: https://package.elm-lang.org/packages/justinmimbs/date/latest/Date#clamp
 
 

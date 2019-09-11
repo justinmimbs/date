@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.2.0 - 2019-09-11
+
+#### Added
+- Helper functions (thank you, [@2mol](https://github.com/2mol))
+    - `min`
+    - `max`
+
+
 ## 3.1.2 - 2018-10-04
 
 #### Fixed

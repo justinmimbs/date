@@ -930,8 +930,8 @@ test_min =
             )
     in
     describe "min"
-        [ test "a < b" <| \() -> Date.min a b |> equal a
-        , test "b < a" <| \() -> Date.min b a |> equal a
+        [ test "a b" <| \() -> Date.min a b |> equal a
+        , test "b a" <| \() -> Date.min b a |> equal a
         ]
 
 
@@ -944,8 +944,8 @@ test_max =
             )
     in
     describe "max"
-        [ test "a < b" <| \() -> Date.max a b |> equal b
-        , test "b < a" <| \() -> Date.max b a |> equal b
+        [ test "a b" <| \() -> Date.max a b |> equal b
+        , test "b a" <| \() -> Date.max b a |> equal b
         ]
 
 

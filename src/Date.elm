@@ -1451,8 +1451,15 @@ max ((RD a) as dateA) ((RD b) as dateB) =
 
 -}
 clamp : Date -> Date -> Date -> Date
-clamp (RD a) (RD b) (RD x) =
-    RD <| Basics.clamp a b x
+clamp ((RD a) as dateA) ((RD b) as dateB) ((RD x) as dateX) =
+    if x < a then
+        dateA
+
+    else if b < x then
+        dateB
+
+    else
+        dateX
 
 
 

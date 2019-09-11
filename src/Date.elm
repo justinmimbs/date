@@ -1378,9 +1378,9 @@ today =
 {-| Compare two dates. This can be used as the compare function for
 `List.sortWith`.
 
-    import Date exposing (fromOrdinal, compare)
+    import Date exposing (fromOrdinalDate, compare)
 
-    compare (fromOrdinal 1970 1) (fromOrdinal 2038 1)
+    compare (fromOrdinalDate 1970 1) (fromOrdinalDate 2038 1)
         == LT
 
 -}
@@ -1389,21 +1389,20 @@ compare (RD a) (RD b) =
     Basics.compare a b
 
 
-{-| Find the greater of two dates.
+{-| Test if a date is within a range, inclusive of the range values.
 
-    import Date exposing (fromOrdinalDate, max)
+    import Date exposing (fromOrdinalDate, isBetween)
 
-    max (fromOrdinalDate 1970 1) (fromOrdinalDate 2038 1)
-        == (fromOrdinalDate 2038 1)
+    minimum = fromOrdinalDate 1970 1
+    maximum = fromOrdinalDate 2038 1
+
+    isBetween minimum maximum (fromOrdinalDate 1969 201)
+        == False
 
 -}
-max : Date -> Date -> Date
-max ((RD a) as dateA) ((RD b) as dateB) =
-    if a < b then
-        dateB
-
-    else
-        dateA
+isBetween : Date -> Date -> Date -> Bool
+isBetween (RD a) (RD b) (RD x) =
+    isBetweenInt a b x
 
 
 {-| Find the lesser of two dates.
@@ -1423,31 +1422,32 @@ min ((RD a) as dateA) ((RD b) as dateB) =
         dateB
 
 
-{-| Test if a date is within a range, inclusive of the range values.
+{-| Find the greater of two dates.
 
-    import Date exposing (fromOrdinal, isBetween)
+    import Date exposing (fromOrdinalDate, max)
 
-    minimum = fromOrdinal 1970 1
-    maximum = fromOrdinal 2038 1
-
-    isBetween minimum maximum (fromOrdinal 1969 201)
-        == False
+    max (fromOrdinalDate 1970 1) (fromOrdinalDate 2038 1)
+        == (fromOrdinalDate 2038 1)
 
 -}
-isBetween : Date -> Date -> Date -> Bool
-isBetween (RD a) (RD b) (RD x) =
-    isBetweenInt a b x
+max : Date -> Date -> Date
+max ((RD a) as dateA) ((RD b) as dateB) =
+    if a < b then
+        dateB
+
+    else
+        dateA
 
 
 {-| Clamp a date within a range.
 
-    import Date exposing (fromOrdinal, clamp)
+    import Date exposing (fromOrdinalDate, clamp)
 
-    minimum = fromOrdinal 1970 1
-    maximum = fromOrdinal 2038 1
+    minimum = fromOrdinalDate 1970 1
+    maximum = fromOrdinalDate 2038 1
 
-    clamp minimum maximum (fromOrdinal 1969 201)
-        == fromOrdinal 1970 1
+    clamp minimum maximum (fromOrdinalDate 1969 201)
+        == fromOrdinalDate 1970 1
 
 -}
 clamp : Date -> Date -> Date -> Date

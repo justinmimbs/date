@@ -2,7 +2,7 @@ module Date exposing
     ( Date
     , Month, Weekday
     , today, fromPosix, fromCalendarDate, fromWeekDate, fromOrdinalDate, fromIsoString, fromRataDie
-    , toIsoString, toRataDie
+    , toIsoString, toRataDie, decoder, encode
     , year, month, day, weekYear, weekNumber, weekday, ordinalDay, quarter, monthNumber, weekdayNumber
     , format
     , Language, formatWithLanguage
@@ -27,7 +27,7 @@ module Date exposing
 
 # Convert
 
-@docs toIsoString, toRataDie
+@docs toIsoString, toRataDie, decoder, encode
 
 
 # Extract
@@ -71,6 +71,8 @@ module Date exposing
 
 -}
 
+import Json.Decode
+import Json.Encode
 import Parser exposing ((|.), (|=), Parser)
 import Pattern exposing (Token(..))
 import Task exposing (Task)
@@ -861,6 +863,29 @@ format pattern =
 toIsoString : Date -> String
 toIsoString =
     format "yyyy-MM-dd"
+
+
+{-| Decode an ISO-8601 date string to a `Date` using [`fromIsoString`](#fromIsoString).
+-}
+decoder : Json.Decode.Decoder Date
+decoder =
+    Json.Decode.string
+        |> Json.Decode.andThen
+            (\str ->
+                case fromIsoString str of
+                    Err error ->
+                        Json.Decode.fail error
+
+                    Ok date ->
+                        Json.Decode.succeed date
+            )
+
+
+{-| Encode a `Date` as an ISO-8601 date string using [`toIsoString`](#toIsoString).
+-}
+encode : Date -> Json.Encode.Value
+encode =
+    toIsoString >> Json.Encode.string
 
 
 

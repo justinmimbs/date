@@ -11,6 +11,7 @@ module Date exposing
     , range
     , compare, isBetween, min, max, clamp
     , monthToNumber, numberToMonth, weekdayToNumber, numberToWeekday
+    , daysInMonth
     )
 
 {-|

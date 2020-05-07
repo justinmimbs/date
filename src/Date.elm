@@ -1466,7 +1466,15 @@ clamp ((RD a) as dateA) ((RD b) as dateB) ((RD x) as dateX) =
 
 -- NUMBERS OF DAYS
 
+{-| Get the number of days for the given month.
 
+    import Date exposing (fromCalendarDate, daysInMonth)
+    import Time exposing (Month(..))
+
+    daysInMonth 2020 Jan
+        == 31
+
+-}
 daysInMonth : Int -> Month -> Int
 daysInMonth y m =
     case m of

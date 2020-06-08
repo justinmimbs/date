@@ -912,7 +912,7 @@ fromIsoString =
                     |> Parser.andThen resultToParser
                )
         )
-        >> Result.mapError (List.map deadEndToString >> String.join "; ")
+        >> Result.mapError (List.head >> Maybe.map deadEndToString >> Maybe.withDefault "")
 
 
 deadEndToString : Parser.DeadEnd -> String

@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.2.1 - 2020-06-08
+
+#### Fixed
+- `fromIsoString` function no longer gives redundant error messages
+
+
 ## 3.2.0 - 2019-09-11
 
 #### Added

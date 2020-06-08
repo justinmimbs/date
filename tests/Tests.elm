@@ -683,6 +683,11 @@ test_fromIsoString =
                 , "2018-W39-3 "
                 , "2018-269 "
                 ]
+        , describe "returns error messages describing only one parser dead end" <|
+            List.map
+                (\s -> test s <| \() -> Date.fromIsoString s |> equal (Err "Expected a date in ISO 8601 format"))
+                [ "2018-"
+                ]
         , describe "can form an isomorphism with toIsoString"
             (List.concat
                 [ List.range 1897 1905

@@ -3,7 +3,7 @@
     "name": "justinmimbs/date",
     "summary": "Work with dates without times or zones",
     "license": "BSD-3-Clause",
-    "version": "3.2.0",
+    "version": "3.2.1",
     "exposed-modules": [
         "Date"
     ],

@@ -10,7 +10,7 @@ module Date exposing
     , Interval(..), ceiling, floor
     , range
     , compare, isBetween, min, max, clamp
-    , monthToNumber, numberToMonth, weekdayToNumber, numberToWeekday
+    , monthToNumber, numberToMonth, daysInMonth, weekdayToNumber, numberToWeekday, isLeapYear
     )
 
 {-|
@@ -65,9 +65,9 @@ module Date exposing
 @docs compare, isBetween, min, max, clamp
 
 
-# Month and Weekday helpers
+# Month, Year, and Weekday helpers
 
-@docs monthToNumber, numberToMonth, weekdayToNumber, numberToWeekday
+@docs monthToNumber, numberToMonth, daysInMonth, weekdayToNumber, numberToWeekday, isLeapYear
 
 -}
 
@@ -153,6 +153,13 @@ toRataDie (RD rd) =
 -- CALCULATIONS
 
 
+{-| See if a given year has 366 days (29th of Februrary).
+
+    isLeapYear 2019 == False
+
+    isLeapYear 2020 == True
+
+-}
 isLeapYear : Int -> Bool
 isLeapYear y =
     modBy 4 y == 0 && modBy 100 y /= 0 || modBy 400 y == 0
@@ -1466,6 +1473,13 @@ clamp ((RD a) as dateA) ((RD b) as dateB) ((RD x) as dateX) =
 -- NUMBERS OF DAYS
 
 
+{-| Return the number of days in the month, accounting for leap years.
+
+    daysInMonth 2019 Feb == 28
+
+    daysInMonth 2020 Feb == 29
+
+-}
 daysInMonth : Int -> Month -> Int
 daysInMonth y m =
     case m of

@@ -1366,7 +1366,7 @@ fromPosix zone posix =
 [calendarexample]: https://github.com/justinmimbs/date/blob/master/examples/Calendar.elm
 
 -}
-today : Task Never Date
+today : Task x Date
 today =
     Task.map2 fromPosix Time.here Time.now
 

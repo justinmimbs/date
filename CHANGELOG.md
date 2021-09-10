@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.0.0 - 2021-09-09
+
+#### Changed
+- `today` type signature relaxed from `Task Never Date` to `Task x Date` (thank you, [@kofigumbs](https://github.com/kofigumbs))
+
+
 ## 3.2.1 - 2020-06-08
 
 #### Fixed

@@ -1,8 +1,8 @@
 module Date exposing
     ( Date
     , Month, Weekday
-    , today, fromPosix, fromCalendarDate, fromWeekDate, fromOrdinalDate, fromIsoString, fromRataDie
-    , toIsoString, toRataDie
+    , today, fromPosix, toPosix, fromCalendarDate, fromWeekDate, fromOrdinalDate, fromIsoString, fromRataDie
+    , toIsoString, toRataDie, dateToMillis
     , year, month, day, weekYear, weekNumber, weekday, ordinalDay, quarter, monthNumber, weekdayNumber
     , format
     , Language, formatWithLanguage
@@ -22,12 +22,12 @@ module Date exposing
 
 # Create
 
-@docs today, fromPosix, fromCalendarDate, fromWeekDate, fromOrdinalDate, fromIsoString, fromRataDie
+@docs today, fromPosix, toPosix, fromCalendarDate, fromWeekDate, fromOrdinalDate, fromIsoString, fromRataDie
 
 
 # Convert
 
-@docs toIsoString, toRataDie
+@docs toIsoString, toRataDie, dateToMillis
 
 
 # Extract
@@ -1255,7 +1255,7 @@ intervalToUnits interval =
         Day ->
             ( 1, Days )
 
-        week ->
+        _ ->
             ( 1, Weeks )
 
 
@@ -1359,6 +1359,25 @@ fromPosix zone posix =
         (posix |> Time.toYear zone)
         (posix |> Time.toMonth zone)
         (posix |> Time.toDay zone)
+
+
+{-| Turn a Date into milliseconds (useful to convert from `Date -> Posix`).
+-}
+dateToMillis : Date -> Int
+dateToMillis date =
+    let
+        daysSinceEpoch : Int
+        daysSinceEpoch =
+            (date |> toRataDie) - 719163
+    in
+    daysSinceEpoch * 86400000
+
+
+{-| Inverse of `fromPosix`, in which we get a `Posix` value from a `Date`.
+-}
+toPosix : Date -> Posix
+toPosix =
+    Time.millisToPosix << dateToMillis
 
 
 {-| Get the current local date. See [this page][calendarexample] for a full example.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.0.1 - 2022-02-27
+
+#### Fixed
+- `fromIsoString` function now provides detailed error messages when given out-of-range date parts (fixes #31)
+
+
 ## 4.0.0 - 2021-09-09
 
 #### Changed

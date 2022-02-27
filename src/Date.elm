@@ -258,14 +258,14 @@ year. Out-of-range day values will be clamped.
 fromOrdinalDate : Int -> Int -> Date
 fromOrdinalDate y od =
     let
-        daysInY =
+        daysInYear =
             if isLeapYear y then
                 366
 
             else
                 365
     in
-    RD <| daysBeforeYear y + (od |> Basics.clamp 1 daysInY)
+    RD <| daysBeforeYear y + (od |> Basics.clamp 1 daysInYear)
 
 
 {-| Create a date from a [calendar date][gregorian]: a year, month, and day of
@@ -298,14 +298,14 @@ week number, and weekday. Out-of-range week number values will be clamped.
 fromWeekDate : Int -> Int -> Weekday -> Date
 fromWeekDate wy wn wd =
     let
-        weeksInWY =
+        weeksInYear =
             if is53WeekYear wy then
                 53
 
             else
                 52
     in
-    RD <| daysBeforeWeekYear wy + ((wn |> Basics.clamp 1 weeksInWY) - 1) * 7 + (wd |> weekdayToNumber)
+    RD <| daysBeforeWeekYear wy + ((wn |> Basics.clamp 1 weeksInYear) - 1) * 7 + (wd |> weekdayToNumber)
 
 
 
@@ -314,40 +314,80 @@ fromWeekDate wy wn wd =
 
 fromOrdinalParts : Int -> Int -> Result String Date
 fromOrdinalParts y od =
-    if
-        (od |> isBetweenInt 1 365)
-            || (od == 366 && isLeapYear y)
-    then
-        Ok <| RD <| daysBeforeYear y + od
+    let
+        daysInYear =
+            if isLeapYear y then
+                366
+
+            else
+                365
+    in
+    if not (od |> isBetweenInt 1 daysInYear) then
+        Err <|
+            "Invalid ordinal date: "
+                ++ ("ordinal-day " ++ String.fromInt od ++ " is out of range")
+                ++ (" (1 to " ++ String.fromInt daysInYear ++ ")")
+                ++ (" for " ++ String.fromInt y)
+                ++ ("; received (year " ++ String.fromInt y ++ ", ordinal-day " ++ String.fromInt od ++ ")")
 
     else
-        Err <| "Invalid ordinal date (" ++ String.fromInt y ++ ", " ++ String.fromInt od ++ ")"
+        Ok <| RD <| daysBeforeYear y + od
 
 
 fromCalendarParts : Int -> Int -> Int -> Result String Date
 fromCalendarParts y mn d =
-    if
-        (mn |> isBetweenInt 1 12)
-            && (d |> isBetweenInt 1 (daysInMonth y (mn |> numberToMonth)))
-    then
-        Ok <| RD <| daysBeforeYear y + daysBeforeMonth y (mn |> numberToMonth) + d
+    if not (mn |> isBetweenInt 1 12) then
+        Err <|
+            "Invalid date: "
+                ++ ("month " ++ String.fromInt mn ++ " is out of range")
+                ++ " (1 to 12)"
+                ++ ("; received (year " ++ String.fromInt y ++ ", month " ++ String.fromInt mn ++ ", day " ++ String.fromInt d ++ ")")
+
+    else if not (d |> isBetweenInt 1 (daysInMonth y (mn |> numberToMonth))) then
+        Err <|
+            "Invalid date: "
+                ++ ("day " ++ String.fromInt d ++ " is out of range")
+                ++ (" (1 to " ++ String.fromInt (daysInMonth y (mn |> numberToMonth)) ++ ")")
+                ++ (" for " ++ (mn |> numberToMonth |> monthToName))
+                ++ (if mn == 2 && d == 29 then
+                        " (" ++ String.fromInt y ++ " is not a leap year)"
+
+                    else
+                        ""
+                   )
+                ++ ("; received (year " ++ String.fromInt y ++ ", month " ++ String.fromInt mn ++ ", day " ++ String.fromInt d ++ ")")
 
     else
-        Err <| "Invalid calendar date (" ++ String.fromInt y ++ ", " ++ String.fromInt mn ++ ", " ++ String.fromInt d ++ ")"
+        Ok <| RD <| daysBeforeYear y + daysBeforeMonth y (mn |> numberToMonth) + d
 
 
 fromWeekParts : Int -> Int -> Int -> Result String Date
 fromWeekParts wy wn wdn =
-    if
-        (wdn |> isBetweenInt 1 7)
-            && ((wn |> isBetweenInt 1 52)
-                    || (wn == 53 && is53WeekYear wy)
-               )
-    then
-        Ok <| RD <| daysBeforeWeekYear wy + (wn - 1) * 7 + wdn
+    let
+        weeksInYear =
+            if is53WeekYear wy then
+                53
+
+            else
+                52
+    in
+    if not (wn |> isBetweenInt 1 weeksInYear) then
+        Err <|
+            "Invalid week date: "
+                ++ ("week " ++ String.fromInt wn ++ " is out of range")
+                ++ (" (1 to " ++ String.fromInt weeksInYear ++ ")")
+                ++ (" for " ++ String.fromInt wy)
+                ++ ("; received (year " ++ String.fromInt wy ++ ", week " ++ String.fromInt wn ++ ", weekday " ++ String.fromInt wdn ++ ")")
+
+    else if not (wdn |> isBetweenInt 1 7) then
+        Err <|
+            "Invalid week date: "
+                ++ ("weekday " ++ String.fromInt wdn ++ " is out of range")
+                ++ " (1 to 7)"
+                ++ ("; received (year " ++ String.fromInt wy ++ ", week " ++ String.fromInt wn ++ ", weekday " ++ String.fromInt wdn ++ ")")
 
     else
-        Err <| "Invalid week date (" ++ String.fromInt wy ++ ", " ++ String.fromInt wn ++ ", " ++ String.fromInt wdn ++ ")"
+        Ok <| RD <| daysBeforeWeekYear wy + (wn - 1) * 7 + wdn
 
 
 

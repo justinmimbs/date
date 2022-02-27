@@ -652,22 +652,32 @@ test_fromIsoString =
                 ]
         , describe "returns Err for invalid dates" <|
             List.map
-                (\s -> test s <| \() -> Date.fromIsoString s |> extractErr "" |> String.startsWith "Invalid" |> equal True)
-                [ "2008-00"
-                , "2008-13"
-                , "2008-00-01"
-                , "2008-13-01"
-                , "2008-01-00"
-                , "2008-01-32"
-                , "2007-02-29"
-                , "2008-02-30"
-                , "2008-W00-1"
-                , "2008-W53-1"
-                , "2008-W01-0"
-                , "2008-W01-8"
-                , "2008-000"
-                , "2007-366"
-                , "2008-367"
+                (\( s, message ) -> test s <| \() -> Date.fromIsoString s |> equal (Err message))
+                -- ordinal-day
+                [ ( "2007-000", "Invalid ordinal date: ordinal-day 0 is out of range (1 to 365) for 2007; received (year 2007, ordinal-day 0)" )
+                , ( "2007-366", "Invalid ordinal date: ordinal-day 366 is out of range (1 to 365) for 2007; received (year 2007, ordinal-day 366)" )
+                , ( "2008-367", "Invalid ordinal date: ordinal-day 367 is out of range (1 to 366) for 2008; received (year 2008, ordinal-day 367)" )
+
+                -- month
+                , ( "2008-00", "Invalid date: month 0 is out of range (1 to 12); received (year 2008, month 0, day 1)" )
+                , ( "2008-13", "Invalid date: month 13 is out of range (1 to 12); received (year 2008, month 13, day 1)" )
+                , ( "2008-00-01", "Invalid date: month 0 is out of range (1 to 12); received (year 2008, month 0, day 1)" )
+                , ( "2008-13-01", "Invalid date: month 13 is out of range (1 to 12); received (year 2008, month 13, day 1)" )
+
+                -- day
+                , ( "2008-01-00", "Invalid date: day 0 is out of range (1 to 31) for January; received (year 2008, month 1, day 0)" )
+                , ( "2008-01-32", "Invalid date: day 32 is out of range (1 to 31) for January; received (year 2008, month 1, day 32)" )
+                , ( "2006-02-29", "Invalid date: day 29 is out of range (1 to 28) for February (2006 is not a leap year); received (year 2006, month 2, day 29)" )
+                , ( "2008-02-30", "Invalid date: day 30 is out of range (1 to 29) for February; received (year 2008, month 2, day 30)" )
+
+                -- week
+                , ( "2008-W00-1", "Invalid week date: week 0 is out of range (1 to 52) for 2008; received (year 2008, week 0, weekday 1)" )
+                , ( "2008-W53-1", "Invalid week date: week 53 is out of range (1 to 52) for 2008; received (year 2008, week 53, weekday 1)" )
+                , ( "2009-W54-1", "Invalid week date: week 54 is out of range (1 to 53) for 2009; received (year 2009, week 54, weekday 1)" )
+
+                -- weekday
+                , ( "2008-W01-0", "Invalid week date: weekday 0 is out of range (1 to 7); received (year 2008, week 1, weekday 0)" )
+                , ( "2008-W01-8", "Invalid week date: weekday 8 is out of range (1 to 7); received (year 2008, week 1, weekday 8)" )
                 ]
         , describe "returns Err for a valid date followed by a 'T'" <|
             List.map

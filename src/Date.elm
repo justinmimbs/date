@@ -4,7 +4,7 @@ module Date exposing
     , today, fromPosix, fromCalendarDate, fromWeekDate, fromOrdinalDate, fromIsoString, fromRataDie
     , toIsoString, toRataDie
     , year, month, day, weekYear, weekNumber, weekday, ordinalDay, quarter, monthNumber, weekdayNumber
-    , format
+    , format, withOrdinalSuffix
     , Language, formatWithLanguage
     , Unit(..), add, diff
     , Interval(..), ceiling, floor
@@ -37,7 +37,7 @@ module Date exposing
 
 # Format
 
-@docs format
+@docs format, withOrdinalSuffix
 
 
 ## Custom Languages
@@ -823,6 +823,17 @@ ordinalSuffix n =
             "th"
 
 
+{-| Convert an integer into an English ordinal number string (like `"4th"`).
+
+    import Date exposing (withOrdinalSuffix)
+
+    withOrdinalSuffix 21 == "21st"
+    withOrdinalSuffix 42 == "42nd"
+    withOrdinalSuffix 0 == "0th"
+    withOrdinalSuffix 23 == "23rd"
+    withOrdinalSuffix -1 == "-1st"
+
+-}
 withOrdinalSuffix : Int -> String
 withOrdinalSuffix n =
     String.fromInt n ++ ordinalSuffix n
@@ -1295,7 +1306,7 @@ intervalToUnits interval =
         Day ->
             ( 1, Days )
 
-        week ->
+        _ ->
             ( 1, Weeks )
 
 

@@ -1,7 +1,7 @@
 module PatternTests exposing (test_fromString)
 
 import Pattern exposing (Pattern, Token)
-import Shim exposing (Expectation, Test, describe, equal, test)
+import Shim exposing (Test, describe, equal, test)
 
 
 f : Char -> Int -> Token

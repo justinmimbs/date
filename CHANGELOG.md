@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.1.0 - 2024-03-09
+
+#### Added
+- Formatting helper function (thanks, @kutyel)
+    - `withOrdinalSuffix`
+
+
 ## 4.0.1 - 2022-02-27
 
 #### Fixed
